@@ -1,0 +1,122 @@
+/* container */
+.topbar {
+  height: 72px;
+  padding: 0 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: transparent;
+}
+
+/* when NOT logged in: push buttons to the top-right */
+.topbar__rightOnly {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* shared button base */
+.topbar__btn {
+  border: 0;
+  cursor: pointer;
+
+  padding: 12px 34px;
+  border-radius: 999px;
+
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.10),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.topbar__btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.topbar__btn:active {
+  transform: translateY(0);
+}
+
+/* Login (blue pill) */
+.topbar__btn--dark {
+  color: #ffffff;
+  background: linear-gradient(180deg, #8fbbe3 0%, #6fa8dc 100%);
+}
+
+/* Sign Up (gray pill) */
+.topbar__btn--light {
+  color: #222;
+  background: linear-gradient(180deg, #eeeeee 0%, #d9d9d9 100%);
+}
+
+/* ===== Logged-in layout styles (optional but nice) ===== */
+.topbar__left {
+  display: flex;
+  align-items: center;
+}
+
+.new-chat {
+  border: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 10px 18px;
+
+  font-weight: 600;
+  font-size: 14px;
+
+  color: #ffffff;
+  background: linear-gradient(180deg, #8fbbe3 0%, #6fa8dc 100%);
+
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.10);
+}
+
+.plus {
+  margin-right: 8px;
+  font-weight: 800;
+}
+
+.topbar__center {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2b2b2b;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  cursor: pointer;
+}
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #222;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+.menu span {
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: #222;
+}

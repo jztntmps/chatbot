@@ -1,16 +1,19 @@
 <main class="chatbox">
   <!-- top right actions -->
-  <header class="topbar">
-    <button class="topbar__btn topbar__btn--dark" type="button">Login</button>
-    <button class="topbar__btn topbar__btn--light" type="button">Sign Up</button>
-  </header>
+<app-topbar
+  [isLoggedIn]="isLoggedIn"
+  (login)="goLogin()"
+  (signup)="goSignup()"
+  (newChat)="startNewChat()"
+></app-topbar>
 
   <!-- chat area -->
   <section class="chat">
-    <div class="chat__header">
+    <div class="chat__header" *ngIf="messages.length === 0">
       <h1 class="headline">Here when you need me.</h1>
       <p class="sub">Type a message and I'll respond.</p>
     </div>
+
 
     <div class="chat__messages" role="log" aria-live="polite">
       <div
@@ -52,4 +55,5 @@
       </button>
     </form>
   </section>
+  <app-footer></app-footer>
 </main>
