@@ -8,9 +8,9 @@ export const routes: Routes = [
       import('./login/login').then(m => m.Login),
   },
   {
-    path: 'login',
+    path: 'indexlogin',
     loadComponent: () =>
-      import('./login/login').then(m => m.Login),
+      import('./indexlogin/indexlogin').then(m => m.IndexLogin),
   },
   {
     path: 'chatbox',
