@@ -1,0 +1,55 @@
+<main class="chatbox">
+  <!-- top right actions -->
+  <header class="topbar">
+    <button class="topbar__btn topbar__btn--dark" type="button">Login</button>
+    <button class="topbar__btn topbar__btn--light" type="button">Sign Up</button>
+  </header>
+
+  <!-- chat area -->
+  <section class="chat">
+    <div class="chat__header">
+      <h1 class="headline">Here when you need me.</h1>
+      <p class="sub">Type a message and I'll respond.</p>
+    </div>
+
+    <div class="chat__messages" role="log" aria-live="polite">
+      <div
+        class="msg"
+        *ngFor="let m of messages"
+        [class.msg--user]="m.role === 'user'"
+        [class.msg--ai]="m.role === 'ai'"
+      >
+        <div class="msg__bubble">{{ m.text }}</div>
+      </div>
+
+      <div class="typing" *ngIf="sending">
+        <div class="typing__bubble">
+          <span class="typing__dot"></span>
+          <span class="typing__dot"></span>
+          <span class="typing__dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <form class="prompt" autocomplete="off" (ngSubmit)="sendMessage()">
+      <input
+        class="prompt__input"
+        type="text"
+        name="message"
+        placeholder="Ask me anything..."
+        [(ngModel)]="message"
+        [disabled]="sending"
+      />
+
+      <button
+        class="prompt__send"
+        type="submit"
+        [disabled]="sending || !message.trim()"
+        [class.prompt__send--disabled]="sending || !message.trim()"
+      >
+        <span class="prompt__arrow" *ngIf="!sending">➤</span>
+        <span class="prompt__loading" *ngIf="sending">◌</span>
+      </button>
+    </form>
+  </section>
+</main>

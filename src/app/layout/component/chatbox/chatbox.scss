@@ -1,0 +1,340 @@
+/* ============================= */
+/* RESET */
+/* ============================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #111;
+  background: #ffffff;
+}
+
+/* ============================= */
+/* MAIN LAYOUT */
+/* ============================= */
+
+.chatbox {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  padding: 22px 24px;
+
+  background:
+    radial-gradient(900px 520px at 20% 15%, rgba(0, 0, 0, 0.035), transparent 60%),
+    radial-gradient(900px 520px at 85% 65%, rgba(0, 0, 0, 0.03), transparent 60%),
+    linear-gradient(#ffffff, #ffffff);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -120px;
+    background:
+      radial-gradient(closest-side, rgba(0, 0, 0, 0.05), transparent 70%),
+      radial-gradient(closest-side, rgba(0, 0, 0, 0.04), transparent 70%),
+      radial-gradient(closest-side, rgba(0, 0, 0, 0.03), transparent 70%);
+    background-size: 700px 520px, 820px 620px, 980px 720px;
+    background-position: 0% 10%, 65% 55%, 20% 85%;
+    filter: blur(8px);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+}
+
+/* ============================= */
+/* TOPBAR */
+/* ============================= */
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.topbar__btn {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.topbar__btn--dark {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.topbar__btn--light {
+  background: #fff;
+  color: #111;
+}
+
+/* ============================= */
+/* CHAT WRAPPER */
+/* ============================= */
+
+.chat {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+
+  width: min(900px, 95vw);
+  margin: 0 auto;
+  padding: 10px 0 20px;
+
+  min-height: 0;
+}
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.chat__header {
+  text-align: center;
+}
+
+.headline {
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+
+.sub {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+/* ============================= */
+/* MESSAGE CONTAINER */
+/* ============================= */
+
+.chat__messages {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(245, 246, 248, 0.75);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+
+  padding: 20px;
+
+  /* AUTO SIZE */
+  height: auto;
+  max-height: calc(100vh - 320px);
+
+  overflow-y: auto;
+  scroll-behavior: smooth;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================= */
+/* MESSAGE ROW */
+/* ============================= */
+
+.msg {
+  display: flex;
+  width: 100%;
+}
+
+.msg--ai {
+  justify-content: flex-start;
+}
+
+.msg--user {
+  justify-content: flex-end;
+}
+
+/* ============================= */
+/* MESSAGE BUBBLE */
+/* ============================= */
+
+.msg__bubble {
+  max-width: min(680px, 85%);
+  padding: 14px 16px;
+  border-radius: 16px;
+
+  font-size: 15px;
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  animation: fadeIn 0.2s ease;
+}
+
+.msg--ai .msg__bubble {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+
+.msg--user .msg__bubble {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* ============================= */
+/* TYPING INDICATOR */
+/* ============================= */
+
+.typing {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.typing__bubble {
+  background: #f0f0f0;
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.typing__dot {
+  width: 8px;
+  height: 8px;
+  background: #666;
+  border-radius: 50%;
+  animation: typingDot 1.4s infinite ease-in-out;
+
+  &:nth-child(1) { animation-delay: 0s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.4s; }
+}
+
+@keyframes typingDot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+/* ============================= */
+/* PROMPT INPUT */
+/* ============================= */
+
+.prompt {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.prompt__input {
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(245, 246, 248, 0.95);
+  padding: 0 18px;
+  font-size: 16px;
+  outline: none;
+
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: #111;
+    background: #ffffff;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+  }
+}
+
+.prompt__send {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: translateX(2px);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.prompt__arrow {
+  font-size: 26px;
+  color: #111;
+}
+
+.prompt__loading {
+  animation: spin 1s linear infinite;
+  font-size: 18px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+
+.footer {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+  padding-top: 14px;
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
