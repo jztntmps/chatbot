@@ -1,66 +1,126 @@
 /* ============================= */
-/* GLOBAL FIX (Remove Scrollbar) */
+/* GLOBAL (NO SCROLLBAR) */
 /* ============================= */
 
 :host {
   display: block;
   height: 100vh;
-  overflow: hidden;   /* ✅ removes scrollbar */
+  overflow: hidden;
 }
 
 /* ============================= */
-/* LAYOUT */
+/* MAIN LAYOUT */
 /* ============================= */
 
 .login {
-  height: 100vh;      /* fixed height */
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: #f7f7f7;   /* ✅ removed image background */
-  padding: 0 40px;       /* remove vertical padding to avoid scroll */
+  background: #ffffff;
+  padding: 0 80px;
 }
 
 .login__container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1400px;
 
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.15fr 1fr;
   align-items: center;
-  gap: 60px;
+  gap: 120px;
 }
 
 /* ============================= */
-/* LEFT */
+/* LEFT SIDE (ROBOT) */
 /* ============================= */
 
 .login__left {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
-/* ✅ CONTROL IMAGE SIZE HERE */
-.login__robot {
-  width: 2000px;     /* adjust size here */
+/* ============================= */
+/* MINI ROBOT COMPOSITION */
+/* ============================= */
+
+.robot {
+  position: relative;
+  width: 420px;
   max-width: 100%;
-  height: auto;
+  margin-left: 150px;
 }
 
+/* Body */
+.robot__body {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.robot__right {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+
+  width: 300px;
+  right: -115px;
+  top: 135px;
+
+  /* shoulder pivot */
+  transform-origin: 18% 22%;
+
+  /* enable 3D feel */
+  transform-style: preserve-3d;
+
+  animation: waveLeftRight 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* LEFT-RIGHT wave (no swing) */
+@keyframes waveLeftRight {
+  /* hold raised */
+  0%, 20% {
+    transform: rotate(0deg) rotateY(20deg) translateX(0);
+  }
+
+  /* left-right wiggles */
+  30% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  40% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  50% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  60% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+
+  /* pause */
+  80%, 100% {
+    transform: rotate(0deg) rotateY(10deg) translateX(0);
+  }
+}
+
+
+
 /* ============================= */
-/* RIGHT */
+/* RIGHT SIDE (FORM) */
 /* ============================= */
 
 .login__right {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  align-items: flex-start;
+  gap: 26px;
 }
 
 .login__title {
-  font-size: 60px;
+  font-size: 64px;
+  margin-left: -50px;
   font-weight: 800;
   color: #111;
 }
@@ -70,66 +130,87 @@
 /* ============================= */
 
 .login__form {
+  width: 420px;
+  max-width: 100%;
+  margin-left: -120px;
+
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 26px;
 }
 
+/* INPUT LINE STYLE */
 .field {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+
+  border-bottom: 2px solid rgba(0, 0, 0, 0.55);
+  padding: 10px 0;
 }
 
-.field label {
-  font-size: 14px;
-  color: #333;
+/* ICON */
+.field__icon {
+  color: #3d5a80;
+  display: flex;
+  align-items: center;
 }
 
-.field input {
+/* INPUT */
+.field__input {
+  flex: 1;
   border: none;
-  border-bottom: 2px solid #444;
-  padding: 12px 4px;
-  font-size: 16px;
   outline: none;
+  font-size: 16px;
   background: transparent;
-  transition: border-color 0.2s ease;
+  padding: 6px 0;
 }
 
-.field input:focus {
-  border-color: #000;
+/* EYE BUTTON */
+.field__eye {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #444;
+  padding: 4px;
 }
 
 /* ============================= */
-/* BUTTON */
+/* LOGIN BUTTON */
 /* ============================= */
 
 .login__btn {
-  margin-top: 20px;
-  height: 52px;
+  margin-top: 6px;
+  height: 48px;
+  width: 100%;
   border-radius: 999px;
   border: none;
 
-  background: #000;
+  background: #6fa8dc;
   color: #fff;
+
   font-size: 16px;
   font-weight: 600;
-
   cursor: pointer;
-  transition: transform 0.15s ease;
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .login__btn:hover {
   transform: translateY(-2px);
+  filter: brightness(1.02);
 }
 
 /* ============================= */
-/* SIGNUP LINK */
+/* SIGNUP TEXT */
 /* ============================= */
 
 .login__signup {
-  font-size: 14px;
-  color: #333;
+  font-size: 18px;
+  text-align: center;
+  width: 100%;
+  color: #111;
 }
 
 .login__signup a {
@@ -147,22 +228,40 @@
 /* RESPONSIVE */
 /* ============================= */
 
-@media (max-width: 900px) {
-  .login__container {
-    grid-template-columns: 1fr;
-    text-align: center;
+@media (max-width: 1000px) {
+  :host {
+    overflow: auto;
   }
 
-  .login__robot {
-    width: 280px;  /* smaller on mobile */
+  .login {
+    padding: 40px 20px;
+  }
+
+  .login__container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .login__left {
+    justify-content: center;
+  }
+
+  .robot {
+    width: 320px;
   }
 
   .login__right {
     align-items: center;
   }
 
+  .login__title {
+    text-align: center;
+    margin-left: 0;
+  }
+
   .login__form {
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
+    margin-left: 0;
   }
 }
