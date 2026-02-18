@@ -7,8 +7,18 @@ export const routes: Routes = [
       import('./login/login').then(m => m.Login),
   },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./login/login').then(m => m.Login),
+  },
+  {
     path: 'chatbox',
     loadComponent: () =>
       import('./layout/component/chatbox/chatbox').then(m => m.Chatbox),
+  },
+  {
+    path: 'signup',
+    loadComponent: () =>
+      import('./signup/signup').then(m => m.Signup),
   },
 ];
