@@ -1,0 +1,37 @@
+<header class="topbar">
+  <!-- NOT LOGGED IN -->
+  <ng-container *ngIf="!isLoggedIn; else loggedInBar">
+    <div class="topbar__rightOnly">
+      <button class="topbar__btn topbar__btn--dark" type="button" (click)="login.emit()">
+        Login
+      </button>
+      <button class="topbar__btn topbar__btn--light" type="button" (click)="signup.emit()">
+        Sign Up
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- LOGGED IN -->
+  <ng-template #loggedInBar>
+    <div class="topbar__left">
+      <button class="new-chat" type="button" (click)="newChat.emit()">
+        <span class="plus">+</span>
+        New Chat
+      </button>
+    </div>
+
+    <div class="topbar__center">
+      {{ today }}
+    </div>
+
+    <div class="topbar__right">
+      <div class="dots" title="More">
+        <span></span><span></span><span></span>
+      </div>
+
+      <div class="menu" title="Menu">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </ng-template>
+</header>
