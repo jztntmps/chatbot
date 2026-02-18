@@ -1,44 +1,77 @@
 <main class="login">
-
   <div class="login__container">
 
-    <!-- LEFT ROBOT -->
+    <!-- LEFT -->
     <div class="login__left">
-      <img src="/assets/ChatGPT.png" alt="Robot" class="login__robot" />
+      <div class="robot">
+
+        <!-- Body -->
+        <img
+          src="/assets/mini_bot.png"
+          alt="Mini Bot"
+          class="robot__body"
+        />
+
+        <img src="/assets/mini_arm.png" alt="Mini Arm" class="robot__right" />
+
+
+      </div>
     </div>
 
-    <!-- RIGHT FORM -->
+    <!-- RIGHT -->
     <div class="login__right">
-
       <h1 class="login__title">Welcome!</h1>
 
       <form class="login__form">
-
         <!-- EMAIL -->
         <div class="field">
-          <label>Email</label>
-          <input type="email" placeholder="Enter your email" />
+          <span class="field__icon">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor"
+                d="M20 4H4c-1.1 0-2 .9-2 2v12c0
+                1.1.9 2 2 2h16c1.1 0 2-.9
+                2-2V6c0-1.1-.9-2-2-2zm0
+                4-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </span>
+          <input type="email" placeholder="Email" class="field__input" />
         </div>
 
         <!-- PASSWORD -->
         <div class="field">
-          <label>Password</label>
-          <input type="password" placeholder="Enter your password" />
+          <span class="field__icon">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor"
+                d="M12 17a2 2 0 0 0 2-2v-1a2
+                2 0 0 0-4 0v1a2 2 0 0 0 2
+                2zm6-7h-1V7a5 5 0 0
+                0-10 0v3H6c-1.1 0-2 .9-2
+                2v8c0 1.1.9 2 2
+                2h12c1.1 0 2-.9
+                2-2v-8c0-1.1-.9-2-2-2zm-3
+                0H9V7a3 3 0 0 1 6 0v3z"/>
+            </svg>
+          </span>
+
+          <input type="password" placeholder="Password" class="field__input" />
+
+          <button type="button" class="field__eye">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor"
+                d="M12 5c-7 0-10 7-10 7s3 7
+                10 7 10-7 10-7-3-7-10-7z"/>
+            </svg>
+          </button>
         </div>
 
-        <!-- LOGIN BUTTON -->
-        <button type="submit" class="login__btn">
-          Login
-        </button>
+        <button type="submit" class="login__btn">Login</button>
 
         <p class="login__signup">
           Don’t have an account?
           <a routerLink="/signup">Sign Up</a>
         </p>
-
       </form>
     </div>
 
   </div>
-
 </main>
