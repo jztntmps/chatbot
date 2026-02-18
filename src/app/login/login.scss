@@ -7,9 +7,9 @@
 }
 
 :root {
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.82);
-  --shadow: rgba(0, 0, 0, 0.45);
+  --text: #000000;
+  --muted: rgba(0, 0, 0, 0.65);
+  --shadow: rgba(0, 0, 0, 0.15);
 }
 
 * {
@@ -20,8 +20,8 @@
 
 body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #000;
-  color: var(--text);
+  background: #ffffff;
+  color: #000000;
 }
 
 /* ===============================
@@ -34,11 +34,8 @@ body {
   overflow: hidden;
   padding: 56px 72px;
 
-  /* ✅ background image + lighter blue overlay like reference */
-  background:
-    radial-gradient(900px 520px at 45% 25%, rgba(92, 120, 255, 0.75), rgba(40, 55, 220, 0.55) 45%, rgba(15, 18, 80, 0.75) 100%),
-    url('/assets/background.png');
-
+  /* ✅ white background with image */
+  background: url('/assets/white.avif');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -88,7 +85,7 @@ body {
 }
 
 
-/* Extra glow layers for depth (softer than before) */
+/* Extra glow layers (hidden) */
 .hero::before {
   content: '';
   position: absolute;
@@ -97,15 +94,10 @@ body {
   top: -180px;
   left: -170px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(120, 170, 255, 0.30) 0%,
-    rgba(60, 70, 200, 0.18) 45%,
-    transparent 72%
-  );
+  background: transparent;
   filter: blur(55px);
   z-index: 0;
-  opacity: 0.85;
+  opacity: 0;
 }
 
 .hero::after {
@@ -116,22 +108,18 @@ body {
   bottom: -220px;
   left: 130px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 200, 255, 0.18), transparent 70%);
+  background: transparent;
   filter: blur(80px);
   z-index: 0;
-  opacity: 0.6;
+  opacity: 0;
 }
 
-/* Optional vignette overlay (lighter) */
+/* Optional vignette overlay (transparent) */
 .overlay {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    980px 520px at 60% 35%,
-    rgba(0, 0, 0, 0),
-    rgba(0, 0, 0, 0.35)
-  );
+  background: transparent;
   z-index: 2;
 }
 
@@ -171,10 +159,10 @@ body {
   width: 520px;
   height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle at center, #3b42c4, #1b1f5e);
+  background: transparent;
   z-index: 0;
   filter: blur(40px);
-  opacity: 0.7;
+  opacity: 0;
 }
 
 /* Floating icons (no animation here, parent floats them) */
@@ -217,7 +205,6 @@ body {
   z-index: 5;   /* higher layer = front */
 
   transform: perspective(800px) rotateY(-18deg);
-  filter: drop-shadow(0 35px 60px rgba(0, 0, 0, 0.65));
 }
 
 /* 🔵 ROBOT — MOVE TO BACK */
@@ -229,7 +216,6 @@ body {
   height: auto;
 
   transform: perspective(800px) rotateY(8deg);
-  filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.5));
 }
 
 /* Shadow can still pulse independently */
@@ -256,34 +242,46 @@ body {
 ================================= */
 
 .hero__right {
-  padding-left: 18px;
+  padding-left: 80px;
   transform: translateY(-8px);
 }
 
 .title {
-  font-family: 'Brick Sans', sans-serif;
+  font-family: 'Coda Caption', sans-serif;
   color: #fff;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 0.92;
+  word-spacing: 150px; /* increase/decrease as needed */
   letter-spacing: 0.5px;
-  font-size: clamp(54px, 5.6vw, 86px);
-  text-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  margin-left: -10px;
+  margin-right: 15px;
+  margin-bottom: 20px;
+
+  font-size: clamp(60px, 6vw, 100px);
 
   .accent {
-    color: #ffc83d; /* yellow AI like ref */
+    color: #7BB3EB;
+    margin: 0 15px;
+  }
+
+  .black {
+    color: #000000;
+    margin: 0 15px;
   }
 
   .blocky {
     display: inline-block;
-    font-family: 'Brick Sans', sans-serif;
+    font-family: 'Coda Caption', sans-serif;
     color: #fff;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 1px;
   }
 }
 
 .desc {
   margin-top: 16px;
+  margin-left: 15px;
+  margin-right: 15px;
   max-width: 520px;
   color: var(--muted);
   line-height: 1.55;
@@ -300,7 +298,9 @@ body {
 ================================= */
 
 .actions {
-  margin-top: 22px;
+  margin-top: -20px;
+  margin-left: 15px;
+  margin-right: 15px;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
@@ -310,36 +310,37 @@ body {
   appearance: none;
   border: 0;
   cursor: pointer;
-  padding: 14px 30px;
-  border-radius: 999px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  min-width: 180px;
+  width: 180px;
+  height: 40px;
+  border-radius: 50px;
+  color: rgb(255, 255, 255);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 
-  box-shadow:
-    0 18px 30px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  background-color: #7BB3EB;
+  box-shadow: 1px 3px 0px #5a8fd4;
 
-  transition: transform 0.15s ease, filter 0.15s ease;
+  transition-duration: 0.3s;
 
   &:hover {
-    transform: translateY(-2px);
     filter: brightness(1.05);
   }
 
   &:active {
-    transform: translateY(0px) scale(0.99);
+    transform: translate(2px, 0px);
+    box-shadow: 0px 1px 0px #5a8fd4;
+    padding-bottom: 1px;
   }
 
   &--ghost {
-    color: #fff;
-    background: rgba(10, 20, 90, 0.38);
-    backdrop-filter: blur(10px);
+    background-color: #7BB3EB;
   }
 
   &--solid {
-    color: #0a2350;
-    background: rgba(255, 255, 255, 0.88);
+    background-color: #7BB3EB;
   }
 }
 
@@ -369,6 +370,7 @@ body {
 
   .desc {
     max-width: 620px;
+   
   }
 
   .hero__left {
