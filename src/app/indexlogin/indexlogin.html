@@ -1,1 +1,44 @@
-<p>indexlogin works!</p>
+<main class="login">
+
+  <div class="login__container">
+
+    <!-- LEFT ROBOT -->
+    <div class="login__left">
+      <img src="/assets/ChatGPT.png" alt="Robot" class="login__robot" />
+    </div>
+
+    <!-- RIGHT FORM -->
+    <div class="login__right">
+
+      <h1 class="login__title">Welcome!</h1>
+
+      <form class="login__form">
+
+        <!-- EMAIL -->
+        <div class="field">
+          <label>Email</label>
+          <input type="email" placeholder="Enter your email" />
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="field">
+          <label>Password</label>
+          <input type="password" placeholder="Enter your password" />
+        </div>
+
+        <!-- LOGIN BUTTON -->
+        <button type="submit" class="login__btn">
+          Login
+        </button>
+
+        <p class="login__signup">
+          Don’t have an account?
+          <a routerLink="/signup">Sign Up</a>
+        </p>
+
+      </form>
+    </div>
+
+  </div>
+
+</main>

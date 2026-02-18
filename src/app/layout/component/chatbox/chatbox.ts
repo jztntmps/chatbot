@@ -46,7 +46,7 @@ export class Chatbox implements OnInit {
   }
 
   goLogin() {
-    this.router.navigate(['/login']);
+    this.router.navigate(['/indexlogin']);
   }
 
   goSignup() {

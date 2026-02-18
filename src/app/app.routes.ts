@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { IndexLogin } from './indexlogin/indexlogin';
 
 export const routes: Routes = [
   {
