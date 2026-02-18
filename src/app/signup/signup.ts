@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-signup',
@@ -10,17 +12,22 @@ import { Router } from '@angular/router';
   styleUrls: ['./signup.scss'],
 })
 export class Signup {
+
+  private http = inject(HttpClient);
+
   constructor(private router: Router) {}
 
   onSubmit(event: SubmitEvent) {
     event.preventDefault();
 
     const form = event.target as HTMLFormElement;
+
+    const username = (form.elements.namedItem('username') as HTMLInputElement)?.value?.trim() ?? '';
     const email = (form.elements.namedItem('email') as HTMLInputElement)?.value?.trim() ?? '';
     const password = (form.elements.namedItem('password') as HTMLInputElement)?.value ?? '';
     const confirm = (form.elements.namedItem('confirmPassword') as HTMLInputElement)?.value ?? '';
 
-    if (!email || !password || !confirm) {
+    if (!username || !email || !password || !confirm) {
       alert('Please fill out all fields.');
       return;
     }
@@ -30,10 +37,24 @@ export class Signup {
       return;
     }
 
-    // TODO: send data to backend. For now, just log and navigate.
-    console.log('Signup data:', { email });
-    alert('Signup successful (demo)');
-    this.router.navigate(['/login']);
-  }
+    const userData = {
+      username,
+      email,
+      password
+    };
 
+    this.http.post('http://localhost:8080/api/auth/signup', userData)
+      .subscribe({
+        next: () => {
+          alert('Signup successful!');
+          this.router.navigate(['/login']);
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Signup failed.');
+        }
+      });
+  }
 }
+
+
