@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { IndexLogin } from './indexlogin/indexlogin';
 
 export const routes: Routes = [
   {
@@ -11,4 +12,5 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./layout/component/chatbox/chatbox').then(m => m.Chatbox),
   },
+   { path: 'indexlogin', component: IndexLogin }, 
 ];
