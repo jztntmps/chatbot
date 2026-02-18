@@ -7,8 +7,8 @@
 }
 
 :root {
-  --text: #eaf2ff;
-  --muted: rgba(234, 242, 255, 0.75);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.82);
   --shadow: rgba(0, 0, 0, 0.45);
 }
 
@@ -25,67 +25,114 @@ body {
 }
 
 /* ===============================
-   MAIN HERO BACKGROUND
+   MAIN HERO BACKGROUND (LIGHTER + IMAGE)
 ================================= */
 
 .hero {
-  background: linear-gradient(135deg, #2E3192 0%, #1B1F5E 100%);
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  padding: 48px 56px;
+  padding: 56px 72px;
+
+  /* ✅ background image + lighter blue overlay like reference */
+  background:
+    radial-gradient(900px 520px at 45% 25%, rgba(92, 120, 255, 0.75), rgba(40, 55, 220, 0.55) 45%, rgba(15, 18, 80, 0.75) 100%),
+    url('/assets/background.png');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* Glow background layers */
+/* ===============================
+   STARS (ONLY silver images)
+================================= */
 
+.stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 3 silver stars */
+.spark {
+  position: absolute;
+  width: 86px;
+  height: auto;
+  opacity: 0.95;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.35));
+}
+
+.spark--1 {
+  top: 120px;
+  right: 160px;
+  transform: rotate(12deg);
+  width: 110px;
+}
+
+.spark--2 {
+  top: 95px;
+  right: 320px;
+  transform: rotate(-8deg);
+  width: 74px;
+  opacity: 0.85;
+}
+
+.spark--3 {
+  top: 210px;
+  right: 120px;
+  transform: rotate(8deg);
+  width: 78px;
+  opacity: 0.85;
+}
+
+
+/* Extra glow layers for depth (softer than before) */
 .hero::before {
   content: '';
   position: absolute;
-  width: 700px;
-  height: 700px;
-  top: -150px;
-  left: -150px;
+  width: 720px;
+  height: 720px;
+  top: -180px;
+  left: -170px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(100, 140, 255, 0.35) 0%,
-    rgba(60, 70, 200, 0.25) 40%,
-    transparent 70%
+    rgba(120, 170, 255, 0.30) 0%,
+    rgba(60, 70, 200, 0.18) 45%,
+    transparent 72%
   );
-  filter: blur(40px);
+  filter: blur(55px);
   z-index: 0;
+  opacity: 0.85;
 }
 
 .hero::after {
   content: '';
   position: absolute;
-  width: 600px;
-  height: 600px;
-  bottom: -200px;
-  left: 100px;
+  width: 640px;
+  height: 640px;
+  bottom: -220px;
+  left: 130px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(0, 200, 255, 0.25),
-    transparent 70%
-  );
-  filter: blur(60px);
+  background: radial-gradient(circle, rgba(0, 200, 255, 0.18), transparent 70%);
+  filter: blur(80px);
   z-index: 0;
+  opacity: 0.6;
 }
 
-/* Optional vignette */
-
+/* Optional vignette overlay (lighter) */
 .overlay {
   pointer-events: none;
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    900px 500px at 65% 35%,
+    980px 520px at 60% 35%,
     rgba(0, 0, 0, 0),
-    rgba(0, 0, 0, 0.45)
+    rgba(0, 0, 0, 0.35)
   );
-  mix-blend-mode: multiply;
-  z-index: 1;
+  z-index: 2;
 }
 
 /* ===============================
@@ -94,61 +141,59 @@ body {
 
 .hero__wrap {
   position: relative;
-  z-index: 3;
-  max-width: 1200px;
+  z-index: 3; /* above stars */
+  max-width: 1260px;
   margin: 0 auto;
+
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 28px;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 42px;
   align-items: center;
-  min-height: calc(100vh - 96px);
+
+  min-height: calc(100vh - 112px);
 }
 
 /* ===============================
-   LEFT SIDE (Robot + Laptop + Icons)
-   ✅ All move together
+   LEFT SIDE (Laptop FRONT, Robot BACK)
 ================================= */
-
 .hero__left {
   position: relative;
   display: grid;
   place-items: center;
   padding-top: 60px;
 
-  /* ✅ one animation for everything inside */
   animation: floatGroup 5s ease-in-out infinite;
+}
 
-  /* Glow behind robot */
-  &::before {
-    content: '';
-    position: absolute;
-    width: 520px;
-    height: 520px;
-    border-radius: 50%;
-    background: radial-gradient(circle at center, #3B42C4, #1B1F5E);
-    z-index: 0;
-    filter: blur(22px);
-    opacity: 0.9;
-  }
+.hero__left::before {
+  content: '';
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #3b42c4, #1b1f5e);
+  z-index: 0;
+  filter: blur(40px);
+  opacity: 0.7;
 }
 
 /* Floating icons (no animation here, parent floats them) */
 .float-icons {
   position: absolute;
-  top: -50px;
+  top: -70px;
   left: 150px;
 
   display: flex;
   gap: -20px;
   align-items: center;
 
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
 
   .icon {
     height: auto;
     width: auto;
-    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
   }
 
   .icon--bracket {
@@ -160,32 +205,31 @@ body {
   }
 }
 
-/* Laptop (no animation here, parent floats it) */
+/* 🟢 LAPTOP — BRING TO FRONT */
 .laptop {
   position: absolute;
-  left: 10px;
-  top: 110px;
+  left: -20px;
+  top: 120px;
 
-  width: 150px;
+  width: 260px;
   height: auto;
 
-  z-index: 0;
-  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.35));
+  z-index: 5;   /* higher layer = front */
 
-  /* ✅ keep flipped */
-  transform: scaleX(-1) rotate(8deg);
+  transform: perspective(800px) rotateY(-18deg);
+  filter: drop-shadow(0 35px 60px rgba(0, 0, 0, 0.65));
 }
 
-
-/* Robot (no animation here, parent floats it) */
+/* 🔵 ROBOT — MOVE TO BACK */
 .robot {
   position: relative;
-  z-index: 1;
+  z-index: 1;   /* lower layer */
 
-  width: min(380px, 75%);
+  width: min(420px, 80%);
   height: auto;
 
-  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.45));
+  transform: perspective(800px) rotateY(8deg);
+  filter: drop-shadow(0 25px 45px rgba(0, 0, 0, 0.5));
 }
 
 /* Shadow can still pulse independently */
@@ -208,11 +252,12 @@ body {
 }
 
 /* ===============================
-   RIGHT SIDE (Text)
+   RIGHT SIDE (Text like reference)
 ================================= */
 
 .hero__right {
-  padding-left: 8px;
+  padding-left: 18px;
+  transform: translateY(-8px);
 }
 
 .title {
@@ -221,10 +266,11 @@ body {
   font-weight: 900;
   line-height: 0.92;
   letter-spacing: 0.5px;
-  font-size: clamp(44px, 5vw, 74px);
+  font-size: clamp(54px, 5.6vw, 86px);
+  text-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 
   .accent {
-    color: #fff;
+    color: #ffc83d; /* yellow AI like ref */
   }
 
   .blocky {
@@ -233,29 +279,28 @@ body {
     color: #fff;
     font-weight: 900;
     letter-spacing: 1px;
-    text-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
   }
 }
 
 .desc {
-  margin-top: 18px;
+  margin-top: 16px;
   max-width: 520px;
   color: var(--muted);
   line-height: 1.55;
-  font-size: 15px;
+  font-size: 14px;
 
   &.dim {
-    margin-top: 14px;
-    color: rgba(234, 242, 255, 0.62);
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.68);
   }
 }
 
 /* ===============================
-   BUTTONS
+   BUTTONS (match ref)
 ================================= */
 
 .actions {
-  margin-top: 26px;
+  margin-top: 22px;
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
@@ -265,32 +310,108 @@ body {
   appearance: none;
   border: 0;
   cursor: pointer;
-  padding: 14px 26px;
+  padding: 14px 30px;
   border-radius: 999px;
   font-weight: 800;
   letter-spacing: 0.2px;
-  min-width: 170px;
-  box-shadow: 0 16px 26px rgba(0, 0, 0, 0.4);
+  min-width: 180px;
+
+  box-shadow:
+    0 18px 30px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+
   transition: transform 0.15s ease, filter 0.15s ease;
 
   &:hover {
     transform: translateY(-2px);
-    filter: brightness(1.06);
+    filter: brightness(1.05);
   }
 
   &:active {
     transform: translateY(0px) scale(0.99);
   }
 
-  &--ghost,
+  &--ghost {
+    color: #fff;
+    background: rgba(10, 20, 90, 0.38);
+    backdrop-filter: blur(10px);
+  }
+
   &--solid {
     color: #0a2350;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.92),
-      rgba(255, 255, 255, 0.75)
-    );
-    border: 1px solid rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.88);
+  }
+}
+
+/* ===============================
+   RESPONSIVE
+================================= */
+
+@media (max-width: 980px) {
+  .hero {
+    padding: 34px 22px;
+  }
+
+  .hero__wrap {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    min-height: auto;
+    padding-top: 20px;
+  }
+
+  .hero__right {
+    padding-left: 0;
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    transform: none;
+  }
+
+  .desc {
+    max-width: 620px;
+  }
+
+  .hero__left {
+    padding-top: 20px;
+  }
+
+  .laptop {
+    left: 50%;
+    top: 150px;
+    transform: translateX(-65%);
+    width: 230px;
+  }
+
+  .float-icons {
+    left: 50%;
+    transform: translateX(-50%);
+    top: -55px;
+  }
+
+  .spark--1,
+  .spark--2,
+  .spark--3 {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 520px) {
+  .title {
+    font-size: clamp(40px, 9vw, 56px);
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .laptop {
+    width: 190px;
+    top: 140px;
   }
 }
 
@@ -299,11 +420,13 @@ body {
 ================================= */
 
 @keyframes floatGroup {
-  0%, 100% { transform: translateY(0); }
+  0%,
+  100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
 
 @keyframes shadowPulse {
-  0%, 100% { transform: scale(1.05); opacity: 0.65; }
-  50% { transform: scale(0.98); opacity: 0.45; }
+  0%,
+  100% { transform: scale(1.05); opacity: 0.55; }
+  50% { transform: scale(0.98); opacity: 0.38; }
 }

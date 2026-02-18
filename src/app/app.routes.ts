@@ -1,6 +1,14 @@
 import { Routes } from '@angular/router';
-import { Login } from './login/login';
 
 export const routes: Routes = [
-  { path: '', component: Login },   // default route shows login
+  {
+    path: '',
+    loadComponent: () =>
+      import('./login/login').then(m => m.Login),
+  },
+  {
+    path: 'chatbox',
+    loadComponent: () =>
+      import('./layout/component/chatbox/chatbox').then(m => m.Chatbox),
+  },
 ];

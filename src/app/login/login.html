@@ -1,4 +1,10 @@
 <main class="hero">
+  <!-- ⭐ background star field + decorative stars -->
+<div class="stars" aria-hidden="true">
+  <img class="spark spark--1" src="assets/widthstart.png" alt="" />
+  <img class="spark spark--2" src="assets/widthstart.png" alt="" />
+  <img class="spark spark--3" src="assets/widthstart.png" alt="" />
+</div>
 
   <section class="hero__wrap">
     <div class="hero__left">
@@ -8,11 +14,12 @@
         <img class="icon icon--ai" src="assets/AI&amp;....png" alt="ai and dots" />
       </div>
 
-      <!-- ✅ Laptop -->
-      <img class="laptop" src="assets/laptopd.png" alt="laptop" />
-
-      <!-- Robot -->
+      <!-- ✅ Robot (BACK) -->
       <img class="robot" src="assets/roboit.webp" alt="robot" />
+
+      <!-- ✅ Laptop (FRONT) -->
+      <img class="laptop" src="assets/laptop.png" alt="laptop" />
+
       <div class="shadow"></div>
     </div>
 
@@ -33,7 +40,7 @@
       </p>
 
       <div class="actions">
-        <button class="btn btn--ghost">Try [NAME] Bot</button>
+        <button class="btn btn--ghost" (click)="goToChat()"> Try knee gha Bot </button>
         <button class="btn btn--solid">Sign In</button>
       </div>
     </div>
