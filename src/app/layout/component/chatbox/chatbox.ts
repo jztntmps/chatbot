@@ -12,6 +12,9 @@ import { Topbar } from '../topbar/topbar';
 import { FooterComponent } from '../footer/footer';
 import { SidebarComponent } from '../sidebar/sidebar';
 
+// ✅ FIXED PATH (chatbox.ts is in src/app/layout/component/chatbox/)
+import { ConversationService } from '../../../services/conversation';
+
 import { firstValueFrom, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { timeout } from 'rxjs/operators';
@@ -40,29 +43,31 @@ export class Chatbox implements OnInit, OnDestroy {
   // sidebar
   sidebarOpen = true;
   userEmail = 'User';
-  chats: ChatPreview[] = [
-    { id: '1', title: '...' },
-    { id: '2', title: '...' },
-    { id: '3', title: '...' },
-  ];
+  chats: ChatPreview[] = [];
 
   // chat
   message = '';
   sending = false;
   messages: ChatMsg[] = [];
 
+  // ✅ conversation tracking
+  userId = ''; // must be real userId (not email)
+  activeConversationId: string | null = null;
+
   private readonly API_URL = 'http://localhost:8080/api/chat';
+  private readonly CONVO_BASE = 'http://localhost:8080/api/conversations';
 
   private navSub?: Subscription;
+  private warnedNoSave = false;
 
   constructor(
     private http: HttpClient,
+    private convoApi: ConversationService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    // ✅ first sync when component loads
     this.syncAuth();
 
     // ✅ sync again whenever route changes to /chatbox
@@ -73,6 +78,10 @@ export class Chatbox implements OnInit, OnDestroy {
           this.syncAuth();
         }
       });
+
+    if (this.messages.length === 0) {
+      this.messages = [];
+    }
   }
 
   ngOnDestroy(): void {
@@ -82,35 +91,113 @@ export class Chatbox implements OnInit, OnDestroy {
   private syncAuth() {
     const saved = localStorage.getItem('isLoggedIn');
 
-    // if no flag exists, treat as NOT logged in
-    this.isLoggedIn = saved === 'true';
+    this.isLoggedIn = saved === 'true' || saved === '1';
     this.userEmail = localStorage.getItem('userEmail') || 'User';
+    this.userId = localStorage.getItem('userId') || '';
+
+    // ✅ restore active conversation across refresh (ONLY if logged in)
+    const savedConvoIdRaw = localStorage.getItem('activeConversationId');
+    const savedConvoId = this.normalizeId(savedConvoIdRaw);
+    this.activeConversationId = this.isLoggedIn ? savedConvoId : null;
+
+    console.log('[syncAuth]', {
+      isLoggedInRaw: saved,
+      isLoggedIn: this.isLoggedIn,
+      userId: this.userId,
+      userEmail: this.userEmail,
+      activeConversationId: this.activeConversationId,
+    });
+
+    if (this.isLoggedIn && this.userId) {
+      this.loadConversations();
+      // ⚠️ DO NOT auto-open saved convo here (can cause 500 loop if id is stale)
+      // user can click a chat in sidebar to open it
+    } else {
+      this.chats = [];
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+    }
 
     this.cdr.detectChanges();
   }
 
-  // ✅ sidebar actions
+  private normalizeId(id: string | null): string | null {
+    if (!id) return null;
+    const v = id.trim();
+    if (!v || v === 'null' || v === 'undefined') return null;
+    return v;
+  }
+
+  private async loadConversations() {
+    try {
+      const list: any[] = await firstValueFrom(
+        this.convoApi.getByUser(this.userId).pipe(timeout(120000))
+      );
+
+      this.chats = (list || []).map((c: any) => ({
+        id: this.extractConversationId(c) || '',
+        title: c.title || '(Untitled)',
+      })).filter(x => !!x.id);
+
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Failed to load conversations', e);
+      this.chats = [];
+    }
+  }
+
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
-    console.log('[chatbox] sidebarOpen:', this.sidebarOpen);
     this.cdr.detectChanges();
   }
 
-  openChat(chatId: string) {
-    console.log('Open chat:', chatId);
-  }
-  seeAll() {
-    console.log('See all chats');
-  }
-  openSettings() {
-    console.log('Open settings');
+  async openChat(chatId: string) {
+    const normalized = this.normalizeId(chatId);
+    if (!normalized) return;
+
+    try {
+      const convo = await firstValueFrom(
+        this.http.get<any>(`${this.CONVO_BASE}/${normalized}`).pipe(timeout(120000))
+      );
+
+      this.activeConversationId = this.extractConversationId(convo) || normalized;
+      localStorage.setItem('activeConversationId', this.activeConversationId);
+
+      const turns = convo?.turns || [];
+      const rebuilt: ChatMsg[] = [];
+
+      for (const t of turns) {
+        if (t?.userMessage) rebuilt.push({ role: 'user', text: t.userMessage });
+        if (t?.botResponse) rebuilt.push({ role: 'ai', text: t.botResponse });
+      }
+
+      this.messages = rebuilt.length ? rebuilt : [];
+      this.scrollToBottom();
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Open chat failed', e);
+
+      // ✅ if saved id is stale, clear it so we stop failing
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+
+      this.messages.push({ role: 'ai', text: '⚠️ Failed to open conversation (maybe deleted). Starting a new chat.' });
+      this.scrollToBottom();
+    }
   }
 
-  // ✅ existing actions
+  seeAll() {}
+  openSettings() {}
+
   startNewChat() {
     this.messages = [{ role: 'ai', text: 'Hi! Ask me anything.' }];
     this.message = '';
     this.sending = false;
+
+    // ✅ IMPORTANT: new chat = new conversation (new title on next send)
+    this.activeConversationId = null;
+    localStorage.removeItem('activeConversationId');
+
     this.scrollToBottom();
   }
 
@@ -123,14 +210,15 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   goArchive() {
-  console.log('Archive clicked');
-  // later: this.router.navigate(['/archive']);
-}
-
+    console.log('Archive clicked');
+  }
 
   logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('activeConversationId');
+
     this.syncAuth();
     this.router.navigate(['/']);
   }
@@ -139,21 +227,78 @@ export class Chatbox implements OnInit, OnDestroy {
     const text = this.message.trim();
     if (!text || this.sending) return;
 
+    const canSave = this.isLoggedIn && !!this.userId;
+
+    if (!canSave && !this.warnedNoSave) {
+      this.warnedNoSave = true;
+      this.messages.push({
+        role: 'ai',
+        text: '⚠️ You are not fully logged in (missing userId). Chat will work, but it won’t be saved.',
+      });
+    }
+
     this.messages.push({ role: 'user', text });
     this.message = '';
-
     this.sending = true;
     this.scrollToBottom();
 
     try {
+      // 1) get chatbot reply
       const res = await firstValueFrom(
         this.http
           .post<{ reply: string }>(this.API_URL, { message: text })
           .pipe(timeout(120000))
       );
 
-      const reply = (res?.reply ?? '').trim();
-      this.messages.push({ role: 'ai', text: reply || '(Empty reply)' });
+      const reply = (res?.reply ?? '').trim() || '(Empty reply)';
+      this.messages.push({ role: 'ai', text: reply });
+
+      // 2) SAVE TO DB only if allowed
+      if (canSave) {
+        // normalize active id (protect from "null"/"undefined")
+        this.activeConversationId = this.normalizeId(this.activeConversationId);
+
+        if (!this.activeConversationId) {
+          // ✅ FIRST MESSAGE ONLY: creates conversation + title
+          const created = await firstValueFrom(
+            this.convoApi.createConversation({
+              userId: this.userId,
+              firstUserMessage: text,
+              firstBotResponse: reply,
+            }).pipe(timeout(120000))
+          );
+
+          const convoId = this.extractConversationId(created);
+          this.activeConversationId = this.normalizeId(convoId);
+
+          console.log('[createConversation] response:', created);
+          console.log('[createConversation] extracted id:', this.activeConversationId);
+
+          if (this.activeConversationId) {
+            localStorage.setItem('activeConversationId', this.activeConversationId);
+          } else {
+            console.error('❌ No conversationId returned by backend. Check Conversation model serialization.');
+          }
+
+          this.loadConversations();
+        } else {
+          // ✅ NEXT MESSAGES: append turns
+          try {
+            await firstValueFrom(
+              this.convoApi.addTurn(this.activeConversationId, {
+                userMessage: text,
+                botResponse: reply,
+              }).pipe(timeout(120000))
+            );
+          } catch (turnErr) {
+            // ✅ If backend says "Conversation not found", reset and create next time
+            console.error('addTurn failed, resetting activeConversationId', turnErr);
+            this.activeConversationId = null;
+            localStorage.removeItem('activeConversationId');
+            // we won't retry in same send (prevents double-saving)
+          }
+        }
+      }
     } catch (e) {
       const err = e as any;
 
@@ -178,5 +323,15 @@ export class Chatbox implements OnInit, OnDestroy {
     }, 0);
   }
 
-  
+  private extractConversationId(obj: any): string | null {
+    if (!obj) return null;
+    return (
+      obj.id ||
+      obj._id ||
+      obj.conversationId ||
+      obj.conversationID ||
+      obj.conversation_id ||
+      null
+    );
+  }
 }

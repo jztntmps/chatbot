@@ -131,13 +131,14 @@
 ========================= */
 
 .sidebar-body {
-  min-height: 0; /* ✅ needed for grid children */
-  padding: 0 18px 0;
+  min-height: 0;       /* ✅ IMPORTANT for grid row scrolling */
+  overflow: auto;
+  position: relative;
+  z-index: 1;
 }
 
-/* list scrolls but scrollbar hidden */
+
 .list {
-  height: 100%;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -148,13 +149,13 @@
   flex-direction: column;
   gap: 12px;
 
-  /* ✅ hide scrollbar but keep scroll */
-  scrollbar-width: none;         /* Firefox */
+  scrollbar-width: none;
 }
 .list::-webkit-scrollbar {
-  width: 0;                      /* Chrome/Safari */
+  width: 0;
   height: 0;
 }
+
 
 /* items */
 .item {
@@ -201,17 +202,22 @@
   color: rgba(0, 0, 0, 0.55);
 }
 
-/* see all */
 .seeall {
-  margin: 6px auto 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
 
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.70);
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+
+  cursor: pointer !important;
+  pointer-events: auto !important;
+
+  position: relative;
+  z-index: 9999;     /* ✅ above everything */
 }
+
 
 /* =========================
    FOOTER (always visible)
@@ -316,7 +322,6 @@
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   }
 
-  .sidebar--closed {
-    transform: translateX(-110%);
-  }
+.sidebar--closed { pointer-events: none; }
+
 }
