@@ -16,7 +16,9 @@ export class IndexLogin {
   password = '';
   showPassword = false;
   errorMsg = '';
+  loading = false;
 
+  // ⚠️ Make sure this matches your backend controller mapping
   private apiUrl = 'http://localhost:8080/api/auth/login';
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -33,18 +35,32 @@ export class IndexLogin {
       return;
     }
 
+    this.loading = true;
+
     this.http
-      .post<any>(this.apiUrl, { email: this.email, password: this.password })
+      .post<any>(this.apiUrl, { email: this.email.trim(), password: this.password })
       .subscribe({
-        next: () => {
+        next: (res) => {
+          // ✅ get real user id from backend response
+          const userId = res?.userId || res?.id || res?._id;
+
+          if (!userId) {
+            this.errorMsg = 'Login succeeded but userId was not returned by backend.';
+            this.loading = false;
+            return;
+          }
+
           localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userEmail', this.email);
+          localStorage.setItem('userEmail', res?.email || this.email.trim());
+          localStorage.setItem('userId', userId); // ✅ IMPORTANT
 
           // ✅ go to your chat route
           this.router.navigate(['/chatbox']);
+          this.loading = false;
         },
         error: (err) => {
           this.errorMsg = err?.error?.message || 'Invalid email or password';
+          this.loading = false;
         },
       });
   }

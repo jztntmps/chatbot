@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <button class="newchat" type="button" (click)="newChat.emit()">
+    <button class="newchat" type="button" (click)="settingsOpen = false; newChat.emit()">
       <span class="newchat__plus">＋</span>
       <span class="newchat__text">New Chat</span>
     </button>
@@ -31,19 +31,27 @@
   <!-- BODY (SCROLLABLE) -->
   <div class="sidebar-body">
     <div class="list">
-      <button
+
+        <button
         class="item"
         type="button"
-        *ngFor="let c of chats; trackBy: trackById"
-        (click)="openChat.emit(c.id)"
-      >
+        *ngFor="let c of (showAll ? chats : (chats | slice:0:3)); trackBy: trackById"
+        (click)="settingsOpen = false; openChat.emit(c.id)"
+        >
         <span class="item__title">{{ c.title }}</span>
         <span class="item__dots">⋯</span>
-      </button>
+        </button>
 
-      <button class="seeall" type="button" (click)="seeAll.emit()">
-        See All
-      </button>
+        <button
+        class="seeall"
+        type="button"
+        *ngIf="chats.length > 3"
+        (click)="toggleSeeAll()"
+        >
+        {{ showAll ? 'Show Less' : 'See All' }}
+        </button>
+
+
     </div>
   </div>
 

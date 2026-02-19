@@ -13,6 +13,7 @@ type ChatPreview = {
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
 })
+
 export class SidebarComponent {
   @Input() isOpen = true;
   @Input() username = 'User';
@@ -32,6 +33,7 @@ export class SidebarComponent {
   @Output() logout = new EventEmitter<void>();
 
   settingsOpen = false;
+  showAll = false;
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
@@ -40,6 +42,11 @@ export class SidebarComponent {
   toggleSettings() {
     this.settingsOpen = !this.settingsOpen;
   }
+
+  toggleSeeAll() {
+  this.showAll = !this.showAll;
+  this.settingsOpen = false;
+}
 
   clickArchive() {
     this.settingsOpen = false;
