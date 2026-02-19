@@ -34,11 +34,8 @@ export class SidebarComponent {
   @Output() logout = new EventEmitter<void>();
 
   settingsOpen = false;
-<<<<<<< HEAD
   showAll = false;
-=======
   showModal = false;
->>>>>>> fbe394ac99c380d141ad3d9aa380a732b5c2e1b1
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
