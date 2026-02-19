@@ -28,6 +28,12 @@ export class Topbar implements OnInit, OnDestroy {
     if (this.timer) window.clearInterval(this.timer);
   }
 
+  onToggleSidebar() {
+    console.log('[topbar] menu clicked');
+    this.toggleSidebar.emit();
+  }
+
+
   private updateDate() {
     this.today = new Date().toLocaleDateString('en-US', {
       month: 'long',

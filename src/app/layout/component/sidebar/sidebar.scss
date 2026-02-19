@@ -1,18 +1,15 @@
 .sidebar {
-  width: 320px;
+  width: 320px; /* or 100% if parent controls it */
   height: 100vh;
-  position: relative;
   background: #f6f6f8;
-  border-right: 1px solid rgba(0,0,0,0.05);
-  padding: 18px 18px 22px;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  padding: 18px 18px 22px; /* keep for top area */
   overflow: hidden;
-}
-.sidebar {
-  overflow-y: hidden;    // vertical scroll hidden
-  overflow-x: hidden;    // horizontal scroll hidden
 }
 
 
@@ -99,36 +96,62 @@
 }
 
 .list {
+  flex: 1;
+  margin: 0 -18px;     /* cancels sidebar left/right padding */
+  padding: 6px 18px 0; /* re-add inner padding but full-width feel */
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 6px 8px 0;
+  gap: 12px;
+  overflow: hidden;
 }
-
+/* ✅ items full width */
 .item {
   width: 100%;
-  height: 54px;
   border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+
+  padding: 14px 18px;   /* ✅ more right padding */
   cursor: pointer;
-  box-shadow: 0 10px 16px rgba(0,0,0,0.10);
+
+  box-shadow: 0 10px 16px rgba(0,0,0,0.08);
+
+  overflow: visible;     /* ✅ prevents clipping inside item */
+}
+
+
+.item:hover {
+  transform: translateY(-1px);
 }
 
 .item__title {
+  flex: 1;                 /* ✅ take remaining space */
+  min-width: 0;            /* ✅ allow ellipsis correctly */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
   color: rgba(0,0,0,0.55);
   font-weight: 600;
   letter-spacing: 0.2px;
 }
 
 .item__dots {
+  flex: 0 0 28px;          /* ✅ fixed width area */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
   font-size: 22px;
   color: rgba(0,0,0,0.55);
+  line-height: 1;          /* ✅ prevents vertical clipping */
 }
+
+
 
 .seeall {
   margin: 6px auto 0;
@@ -141,6 +164,7 @@
 
 .settings {
   margin-top: auto;
+  margin-bottom: 25px;
   width: 100%;
   height: 56px;
   border: 0;
@@ -155,9 +179,63 @@
 
 .settings__icon {
   font-size: 22px;
+  margin-bottom: 5px;
 }
 
 .settings__text {
   font-size: 18px;
   font-weight: 600;
+}
+
+.settings-wrap {
+  margin-top: auto;
+  padding: 18px 18px 20px;
+  position: relative;
+}
+
+.settings-menu {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.settings-menu__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  padding: 12px 12px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  transition: background 0.15s ease;
+}
+
+.settings-menu__item:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.settings-menu__item--danger {
+  color: #b42318;
+}
+
+.settings-menu__item--danger:hover {
+  background: rgba(180, 35, 24, 0.10);
+}
+
+.sidebar--closed {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
 }

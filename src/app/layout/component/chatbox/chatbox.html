@@ -1,27 +1,28 @@
 <div class="layout">
-
-  <!-- LEFT SIDEBAR (ONLY WHEN LOGGED IN) -->
-  <app-sidebar
-    *ngIf="isLoggedIn"
-    [isOpen]="sidebarOpen"
-    [username]="userEmail"
-    [chats]="chats"
-    (toggle)="toggleSidebar()"
-    (newChat)="startNewChat()"
-    (openChat)="openChat($event)"
-    (seeAll)="seeAll()"
-    (settings)="openSettings()"
-  ></app-sidebar>
+  <!-- SIDEBAR -->
+  <div class="sidebar-shell" *ngIf="sidebarOpen">
+    <app-sidebar
+      [isOpen]="sidebarOpen"
+      [username]="userEmail"
+      [chats]="chats"
+      (newChat)="startNewChat()"
+      (openChat)="openChat($event)"
+      (seeAll)="seeAll()"
+      (settings)="openSettings()"
+      (archive)="goArchive()"
+      (logout)="logout()"
+    ></app-sidebar>
+  </div>
 
   <!-- RIGHT CONTENT -->
-  <main class="chatbox" [class.chatbox--full]="!isLoggedIn">
-
+  <main class="chatbox">
     <app-topbar
       [isLoggedIn]="isLoggedIn"
       (login)="goLogin()"
       (signup)="goSignup()"
-      (newChat)="startNewChat()"
+      (toggleSidebar)="toggleSidebar()"
     ></app-topbar>
+
 
     <!-- CHAT AREA -->
     <section class="chat">

@@ -16,7 +16,7 @@ type ChatPreview = {
 export class SidebarComponent {
   @Input() isOpen = true;
   @Input() username = 'User';
-  @Input() avatarUrl = ''; // optional (if empty, shows default)
+  @Input() avatarUrl = '';
 
   @Input() chats: ChatPreview[] = [
     { id: '1', title: '...' },
@@ -28,9 +28,29 @@ export class SidebarComponent {
   @Output() newChat = new EventEmitter<void>();
   @Output() openChat = new EventEmitter<string>();
   @Output() seeAll = new EventEmitter<void>();
-  @Output() settings = new EventEmitter<void>();
+
+  // ✅ NEW outputs
+  @Output() archive = new EventEmitter<void>();
+  @Output() logout = new EventEmitter<void>();
+
+  // ✅ local UI state
+  settingsOpen = false;
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
+  }
+
+  toggleSettings() {
+    this.settingsOpen = !this.settingsOpen;
+  }
+
+  clickArchive() {
+    this.archive.emit();
+    this.settingsOpen = false;
+  }
+
+  clickLogout() {
+    this.logout.emit();
+    this.settingsOpen = false;
   }
 }

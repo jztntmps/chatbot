@@ -310,3 +310,22 @@ body {
 .chatbox--full {
   width: 100%;
 }
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* controls sidebar width */
+.sidebar-shell {
+  width: 320px;            /* sidebar width */
+  flex: 0 0 auto;
+  transition: width 0.25s ease;
+  overflow: hidden;        /* hides sidebar content when closed */
+}
+
+/* closed state = no sidebar space */
+.sidebar-shell--closed {
+  width: 0;
+}

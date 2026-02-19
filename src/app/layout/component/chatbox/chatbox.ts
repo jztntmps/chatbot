@@ -92,7 +92,10 @@ export class Chatbox implements OnInit, OnDestroy {
   // ✅ sidebar actions
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+    console.log('[chatbox] sidebarOpen:', this.sidebarOpen);
+    this.cdr.detectChanges();
   }
+
   openChat(chatId: string) {
     console.log('Open chat:', chatId);
   }
@@ -119,11 +122,17 @@ export class Chatbox implements OnInit, OnDestroy {
     this.router.navigate(['/signup']);
   }
 
+  goArchive() {
+  console.log('Archive clicked');
+  // later: this.router.navigate(['/archive']);
+}
+
+
   logout() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userEmail');
     this.syncAuth();
-    this.router.navigate(['/indexlogin']);
+    this.router.navigate(['/']);
   }
 
   async sendMessage() {

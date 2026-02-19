@@ -15,26 +15,45 @@
     <span class="newchat__text">New Chat</span>
   </button>
 
-  <!-- chat previews -->
-  <div class="list">
+    <!-- chat previews -->
+    <div class="list">
     <button
-      class="item"
-      type="button"
-      *ngFor="let c of chats; trackBy: trackById"
-      (click)="openChat.emit(c.id)"
+        class="item"
+        type="button"
+        *ngFor="let c of chats; trackBy: trackById"
+        (click)="openChat.emit(c.id)"
     >
-      <span class="item__title">{{ c.title }}</span>
-      <span class="item__dots">…</span>
+        <span class="item__title">{{ c.title }}</span>
+        <span class="item__dots">⋯</span>
     </button>
 
     <button class="seeall" type="button" (click)="seeAll.emit()">
-      See All
+        See All
     </button>
-  </div>
+    </div>
 
-  <!-- bottom settings -->
-  <button class="settings" type="button" (click)="settings.emit()">
-    <span class="settings__icon">⚙</span>
-    <span class="settings__text">Settings</span>
-  </button>
+    <!-- bottom settings -->
+    <div class="settings-wrap">
+    <button class="settings" type="button" (click)="toggleSettings()">
+        <span class="settings__icon">⚙</span>
+        <span class="settings__text">Settings</span>
+    </button>
+
+    <!-- ✅ dropdown -->
+    <div class="settings-menu" *ngIf="settingsOpen">
+        <button class="settings-menu__item" type="button" (click)="clickArchive()">
+        📁 <span>Archive</span>
+        </button>
+
+        <button
+        class="settings-menu__item settings-menu__item--danger"
+        type="button"
+        (click)="clickLogout()"
+        >
+        🚪 <span>Logout</span>
+        </button>
+
+    </div>
+    </div>
+
 </aside>
