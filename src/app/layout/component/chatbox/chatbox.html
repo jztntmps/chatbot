@@ -1,6 +1,6 @@
 <div class="layout">
-  <!-- SIDEBAR -->
-  <div class="sidebar-shell" *ngIf="sidebarOpen">
+<!-- SIDEBAR -->
+  <div class="sidebar-shell" *ngIf="isLoggedIn && sidebarOpen">
     <app-sidebar
       [isOpen]="sidebarOpen"
       [username]="userEmail"
