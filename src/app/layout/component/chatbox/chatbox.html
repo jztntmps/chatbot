@@ -1,59 +1,77 @@
-<main class="chatbox">
-  <!-- top right actions -->
-<app-topbar
-  [isLoggedIn]="isLoggedIn"
-  (login)="goLogin()"
-  (signup)="goSignup()"
-  (newChat)="startNewChat()"
-></app-topbar>
+<div class="layout">
 
-  <!-- chat area -->
-  <section class="chat">
-    <div class="chat__header" *ngIf="messages.length === 0">
-      <h1 class="headline">Here when you need me.</h1>
-      <p class="sub">Type a message and I'll respond.</p>
-    </div>
+  <!-- LEFT SIDEBAR (ONLY WHEN LOGGED IN) -->
+  <app-sidebar
+    *ngIf="isLoggedIn"
+    [isOpen]="sidebarOpen"
+    [username]="userEmail"
+    [chats]="chats"
+    (toggle)="toggleSidebar()"
+    (newChat)="startNewChat()"
+    (openChat)="openChat($event)"
+    (seeAll)="seeAll()"
+    (settings)="openSettings()"
+  ></app-sidebar>
 
+  <!-- RIGHT CONTENT -->
+  <main class="chatbox" [class.chatbox--full]="!isLoggedIn">
 
-    <div class="chat__messages" role="log" aria-live="polite">
-      <div
-        class="msg"
-        *ngFor="let m of messages"
-        [class.msg--user]="m.role === 'user'"
-        [class.msg--ai]="m.role === 'ai'"
-      >
-        <div class="msg__bubble">{{ m.text }}</div>
+    <app-topbar
+      [isLoggedIn]="isLoggedIn"
+      (login)="goLogin()"
+      (signup)="goSignup()"
+      (newChat)="startNewChat()"
+    ></app-topbar>
+
+    <!-- CHAT AREA -->
+    <section class="chat">
+
+      <div class="chat__header" *ngIf="messages.length === 0">
+        <h1 class="headline">Here when you need me.</h1>
+        <p class="sub">Type a message and I'll respond.</p>
       </div>
 
-      <div class="typing" *ngIf="sending">
-        <div class="typing__bubble">
-          <span class="typing__dot"></span>
-          <span class="typing__dot"></span>
-          <span class="typing__dot"></span>
+      <div class="chat__messages" role="log" aria-live="polite">
+        <div
+          class="msg"
+          *ngFor="let m of messages"
+          [class.msg--user]="m.role === 'user'"
+          [class.msg--ai]="m.role === 'ai'"
+        >
+          <div class="msg__bubble">{{ m.text }}</div>
+        </div>
+
+        <div class="typing" *ngIf="sending">
+          <div class="typing__bubble">
+            <span class="typing__dot"></span>
+            <span class="typing__dot"></span>
+            <span class="typing__dot"></span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <form class="prompt" autocomplete="off" (ngSubmit)="sendMessage()">
-      <input
-        class="prompt__input"
-        type="text"
-        name="message"
-        placeholder="Ask me anything..."
-        [(ngModel)]="message"
-        [disabled]="sending"
-      />
+      <form class="prompt" autocomplete="off" (ngSubmit)="sendMessage()">
+        <input
+          class="prompt__input"
+          type="text"
+          name="message"
+          placeholder="Ask me anything..."
+          [(ngModel)]="message"
+          [disabled]="sending"
+        />
 
-      <button
-        class="prompt__send"
-        type="submit"
-        [disabled]="sending || !message.trim()"
-        [class.prompt__send--disabled]="sending || !message.trim()"
-      >
-        <span class="prompt__arrow" *ngIf="!sending">➤</span>
-        <span class="prompt__loading" *ngIf="sending">◌</span>
-      </button>
-    </form>
-  </section>
-  <app-footer></app-footer>
-</main>
+        <button
+          class="prompt__send"
+          type="submit"
+          [disabled]="sending || !message.trim()"
+          [class.prompt__send--disabled]="sending || !message.trim()"
+        >
+          <span class="prompt__arrow" *ngIf="!sending">➤</span>
+          <span class="prompt__loading" *ngIf="sending">◌</span>
+        </button>
+      </form>
+    </section>
+
+    <app-footer></app-footer>
+  </main>
+</div>

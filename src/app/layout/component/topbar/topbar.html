@@ -12,26 +12,25 @@
   </ng-container>
 
   <!-- LOGGED IN -->
-  <ng-template #loggedInBar>
-    <div class="topbar__left">
-      <button class="new-chat" type="button" (click)="newChat.emit()">
-        <span class="plus">+</span>
-        New Chat
-      </button>
+<ng-template #loggedInBar>
+  <div class="topbar__left">
+
+
+    <div class="menu" title="Menu">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="topbar__center">
+    {{ today }}
+  </div>
+
+  <div class="topbar__right">
+    <div class="dots" title="More">
+      <span></span><span></span><span></span>
     </div>
 
-    <div class="topbar__center">
-      {{ today }}
-    </div>
+  </div>
+</ng-template>
 
-    <div class="topbar__right">
-      <div class="dots" title="More">
-        <span></span><span></span><span></span>
-      </div>
-
-      <div class="menu" title="Menu">
-        <span></span><span></span><span></span>
-      </div>
-    </div>
-  </ng-template>
 </header>

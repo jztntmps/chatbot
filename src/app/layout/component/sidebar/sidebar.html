@@ -1,0 +1,40 @@
+<aside class="sidebar" [class.sidebar--closed]="!isOpen">
+  <!-- profile -->
+  <div class="profile">
+    <div class="avatar">
+      <img *ngIf="avatarUrl; else fallback" [src]="avatarUrl" alt="Avatar" />
+      <ng-template #fallback>
+        <div class="avatar__fallback">👤</div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- new chat -->
+  <button class="newchat" type="button" (click)="newChat.emit()">
+    <span class="newchat__plus">＋</span>
+    <span class="newchat__text">New Chat</span>
+  </button>
+
+  <!-- chat previews -->
+  <div class="list">
+    <button
+      class="item"
+      type="button"
+      *ngFor="let c of chats; trackBy: trackById"
+      (click)="openChat.emit(c.id)"
+    >
+      <span class="item__title">{{ c.title }}</span>
+      <span class="item__dots">…</span>
+    </button>
+
+    <button class="seeall" type="button" (click)="seeAll.emit()">
+      See All
+    </button>
+  </div>
+
+  <!-- bottom settings -->
+  <button class="settings" type="button" (click)="settings.emit()">
+    <span class="settings__icon">⚙</span>
+    <span class="settings__text">Settings</span>
+  </button>
+</aside>
