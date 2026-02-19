@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Modal } from '../modal/modal';
 
 type ChatPreview = {
   id: string;
@@ -9,7 +10,7 @@ type ChatPreview = {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Modal],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
 })
@@ -33,7 +34,11 @@ export class SidebarComponent {
   @Output() logout = new EventEmitter<void>();
 
   settingsOpen = false;
+<<<<<<< HEAD
   showAll = false;
+=======
+  showModal = false;
+>>>>>>> fbe394ac99c380d141ad3d9aa380a732b5c2e1b1
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
@@ -50,6 +55,7 @@ export class SidebarComponent {
 
   clickArchive() {
     this.settingsOpen = false;
+    this.showModal = true;
     this.archive.emit();
   }
 
@@ -61,5 +67,9 @@ export class SidebarComponent {
   selectChat(id: string) {
     this.openChat.emit(id);
     this.settingsOpen = false;
+  }
+
+  closeModal() {
+    this.showModal = false;
   }
 }
