@@ -14,11 +14,9 @@
   <!-- LOGGED IN -->
 <ng-template #loggedInBar>
   <div class="topbar__left">
-
-
-    <div class="menu" title="Menu">
+    <button class="menu" type="button" title="Menu" (click)="onToggleSidebar()">
       <span></span><span></span><span></span>
-    </div>
+    </button>
   </div>
 
   <div class="topbar__center">
