@@ -1,59 +1,72 @@
 <aside class="sidebar" [class.sidebar--closed]="!isOpen">
-  <!-- profile -->
-  <div class="profile">
-    <div class="avatar">
-      <img *ngIf="avatarUrl; else fallback" [src]="avatarUrl" alt="Avatar" />
-      <ng-template #fallback>
-        <div class="avatar__fallback">👤</div>
-      </ng-template>
+
+  <!-- HEADER -->
+  <div class="sidebar-header">
+    <div class="sidebar__top">
+      <button
+        class="burger"
+        type="button"
+        (click)="toggle.emit()"
+        aria-label="Toggle sidebar"
+      >
+        ☰
+      </button>
     </div>
+
+    <div class="profile">
+      <div class="avatar">
+        <img *ngIf="avatarUrl; else fallback" [src]="avatarUrl" alt="Avatar" />
+        <ng-template #fallback>
+          <div class="avatar__fallback">👤</div>
+        </ng-template>
+      </div>
+    </div>
+
+    <button class="newchat" type="button" (click)="newChat.emit()">
+      <span class="newchat__plus">＋</span>
+      <span class="newchat__text">New Chat</span>
+    </button>
   </div>
 
-  <!-- new chat -->
-  <button class="newchat" type="button" (click)="newChat.emit()">
-    <span class="newchat__plus">＋</span>
-    <span class="newchat__text">New Chat</span>
-  </button>
-
-    <!-- chat previews -->
+  <!-- BODY (SCROLLABLE) -->
+  <div class="sidebar-body">
     <div class="list">
-    <button
+      <button
         class="item"
         type="button"
         *ngFor="let c of chats; trackBy: trackById"
         (click)="openChat.emit(c.id)"
-    >
+      >
         <span class="item__title">{{ c.title }}</span>
         <span class="item__dots">⋯</span>
-    </button>
+      </button>
 
-    <button class="seeall" type="button" (click)="seeAll.emit()">
+      <button class="seeall" type="button" (click)="seeAll.emit()">
         See All
-    </button>
+      </button>
     </div>
+  </div>
 
-    <!-- bottom settings -->
-    <div class="settings-wrap">
+  <!-- FOOTER -->
+  <div class="sidebar-footer">
     <button class="settings" type="button" (click)="toggleSettings()">
-        <span class="settings__icon">⚙</span>
-        <span class="settings__text">Settings</span>
+      <span class="settings__icon">⚙</span>
+      <span class="settings__text">Settings</span>
     </button>
 
-    <!-- ✅ dropdown -->
     <div class="settings-menu" *ngIf="settingsOpen">
-        <button class="settings-menu__item" type="button" (click)="clickArchive()">
+      <button class="settings-menu__item" type="button" (click)="clickArchive()">
         📁 <span>Archive</span>
-        </button>
+      </button>
 
-        <button
+      <button
         class="settings-menu__item settings-menu__item--danger"
         type="button"
         (click)="clickLogout()"
-        >
+      >
         🚪 <span>Logout</span>
-        </button>
-
+      </button>
     </div>
-    </div>
+  </div>
 
 </aside>

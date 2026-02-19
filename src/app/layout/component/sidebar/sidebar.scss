@@ -1,55 +1,76 @@
+/* =========================
+   SIDEBAR (GRID - TRUE FOOTER)
+========================= */
+
 .sidebar {
-  width: 320px; /* or 100% if parent controls it */
+  width: clamp(220px, 20vw, 260px);
   height: 100vh;
+
   background: #f6f6f8;
   border-right: 1px solid rgba(0, 0, 0, 0.05);
 
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  position: relative;
+  z-index: 60;
 
-  padding: 18px 18px 22px; /* keep for top area */
+  /* ✅ EXACTLY 3 rows (header, body, footer) */
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  /* top padding for burger, and little bottom padding */
+  padding: 56px 18px 10px;
+
   overflow: hidden;
+  transition: transform 0.25s ease;
 }
 
-
-/* optional closed state */
-.sidebar--closed {
-  transform: translateX(-100%);
+/* top actions */
+.sidebar__top {
   position: absolute;
-  left: 0;
-  top: 0;
+  top: 10px;
+  left: 10px;
 }
 
 .burger {
-  position: absolute;
-  right: 14px;
-  top: 10px;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 0;
   background: transparent;
-  font-size: 26px;
-  line-height: 1;
+  font-size: 22px;
   cursor: pointer;
   opacity: 0.85;
 }
 
+/* closed */
+.sidebar--closed {
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+/* =========================
+   HEADER (profile + newchat)
+========================= */
+
+.sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .profile {
-  padding-top: 34px;
   display: flex;
   justify-content: center;
+  padding: 8px 0 0;
 }
 
 .avatar {
-  width: 110px;
-  height: 110px;
+  width: 78px;
+  height: 78px;
   border-radius: 999px;
   background: #1877f2;
   display: grid;
   place-items: center;
   overflow: hidden;
-  box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .avatar img {
@@ -59,147 +80,180 @@
 }
 
 .avatar__fallback {
-  font-size: 44px;
-  color: white;
+  font-size: 32px;
+  color: #fff;
 }
 
 .newchat {
-  margin: 6px auto 4px;
-  width: 220px;
-  height: 44px;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto 4px;
+
+  height: 40px;
   border: 0;
   border-radius: 999px;
+
   background: #1f4b6e;
   color: #fff;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
-}
+  gap: 8px;
 
-.newchat:active {
-  transform: translateY(1px);
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
 }
 
 .newchat__plus {
-  font-size: 20px;
-  width: 22px;
+  font-size: 18px;
+  width: 20px;
   display: inline-grid;
   place-items: center;
 }
 
 .newchat__text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
-.list {
-  flex: 1;
-  margin: 0 -18px;     /* cancels sidebar left/right padding */
-  padding: 6px 18px 0; /* re-add inner padding but full-width feel */
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* =========================
+   BODY (this row MUST take 1fr)
+========================= */
+
+.sidebar-body {
+  min-height: 0;   /* ✅ required so it can shrink */
   overflow: hidden;
 }
-/* ✅ items full width */
+
+/* list scrolls */
+.list {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  margin: 0 -18px;
+  padding: 10px 18px 10px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .item {
   width: 100%;
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
   background: #fff;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 14px 18px;   /* ✅ more right padding */
+  padding: 12px 14px;
   cursor: pointer;
 
-  box-shadow: 0 10px 16px rgba(0,0,0,0.08);
-
-  overflow: visible;     /* ✅ prevents clipping inside item */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s ease;
 }
 
-
 .item:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .item__title {
-  flex: 1;                 /* ✅ take remaining space */
-  min-width: 0;            /* ✅ allow ellipsis correctly */
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 
-  color: rgba(0,0,0,0.55);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .item__dots {
-  flex: 0 0 28px;          /* ✅ fixed width area */
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  font-size: 22px;
-  color: rgba(0,0,0,0.55);
-  line-height: 1;          /* ✅ prevents vertical clipping */
+  flex: 0 0 24px;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 1;
 }
-
-
 
 .seeall {
   margin: 6px auto 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  color: rgba(0,0,0,0.70);
-  font-weight: 600;
+
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.7);
 }
 
-.settings {
-  margin-top: auto;
-  margin-bottom: 25px;
-  width: 100%;
-  height: 56px;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  cursor: pointer;
-  color: rgba(0,0,0,0.80);
-}
+/* =========================
+   FOOTER (Settings truly at bottom)
+========================= */
 
-.settings__icon {
-  font-size: 22px;
-  margin-bottom: 5px;
-}
+.sidebar-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 
-.settings__text {
-  font-size: 18px;
-  font-weight: 600;
-}
+  /* ✅ "medyo ibaba" = more bottom padding */
+  padding: 16px 0 24px;
 
-.settings-wrap {
-  margin-top: auto;
-  padding: 18px 18px 20px;
   position: relative;
 }
 
+/* settings button */
+.settings {
+  width: 100%;
+  height: 46px;
+
+  border: 0;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.settings__icon {
+  font-size: 20px;
+}
+
+.settings__text {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* dropdown above button */
 .settings-menu {
-  margin-top: 10px;
-  background: rgba(255, 255, 255, 0.95);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(46px + 12px);
+
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 14px;
   padding: 8px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(8px);
+
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(10px);
+
+  z-index: 120;
+  transform-origin: bottom center;
+  animation: menuUp 160ms ease-out;
+}
+
+@keyframes menuUp {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .settings-menu__item {
@@ -208,16 +262,16 @@
   background: transparent;
   cursor: pointer;
 
-  padding: 12px 12px;
+  padding: 11px 10px;
   border-radius: 10px;
 
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   text-align: left;
 
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 
   transition: background 0.15s ease;
 }
@@ -231,11 +285,36 @@
 }
 
 .settings-menu__item--danger:hover {
-  background: rgba(180, 35, 24, 0.10);
+  background: rgba(180, 35, 24, 0.1);
 }
 
-.sidebar--closed {
-  transform: translateX(-100%);
-  opacity: 0;
-  pointer-events: none;
+/* =========================
+   MOBILE DRAWER + OVERLAY
+========================= */
+
+.overlay { display: none; }
+
+@media (max-width: 640px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: min(78vw, 250px);
+    height: 100vh;
+
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .sidebar--closed {
+    transform: translateX(-110%);
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 50;
+  }
 }

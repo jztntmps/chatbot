@@ -1,7 +1,6 @@
-/* ============================= */
-/* RESET */
-/* ============================= */
-
+/* =============================
+   RESET (optional if already global)
+============================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -18,47 +17,83 @@ body {
   background: #ffffff;
 }
 
-/* ============================= */
-/* MAIN LAYOUT */
-/* ============================= */
+/* =============================
+   MAIN LAYOUT (NO GAP)
+============================= */
 
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* SIDEBAR SHELL (left column) */
+.sidebar-shell {
+  width: 320px;
+  flex: 0 0 320px; /* ✅ fixed, no shrink = no weird white space */
+  overflow: hidden;
+}
+
+/* RIGHT CONTENT (main) */
 .chatbox {
-  min-height: 100vh;
-  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;     /* ✅ important */
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  /* ✅ REMOVE outer padding so it touches sidebar */
+  padding: 0;
+
+  overflow: hidden;
+
+  /* background image */
+  background: url('/assets/whitebackground.avif') center / cover no-repeat;
+}
+
+/* make sure nested flex items can shrink properly */
+.layout,
+.chatbox,
+.chat,
+.chat__messages {
+  min-width: 0;
+}
+
+/* =============================
+   TOPBAR
+============================= */
+app-topbar {
+  flex: 0 0 auto;
+  z-index: 50;
+}
+
+/* =============================
+   CHAT AREA (padding moved here)
+============================= */
+
+.chat {
+  flex: 1 1 auto;
+  min-height: 0; /* ✅ critical for scroll */
   overflow: hidden;
 
   display: flex;
   flex-direction: column;
-
-  padding: 22px 24px;
-
-  /* ✅ Your background image */
-  background: url('/assets/whitebackground.avif') center / cover no-repeat;
-}
-
-/* ============================= */
-/* CHAT WRAPPER */
-/* ============================= */
-
-.chat {
-  flex: 1;
-
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center; /* center like screenshot */
+  justify-content: center;
+
+  /* ✅ moved spacing INSIDE chat, not on chatbox edge */
+  padding: 22px 24px 18px;
 
   gap: 28px;
-
   width: 100%;
 }
 
-/* ============================= */
-/* HEADER */
-/* ============================= */
-
+/* header */
 .chat__header {
   text-align: center;
+  margin-top: 0;
+  padding-top: 120px; /* keep your original feel */
 }
 
 .headline {
@@ -73,28 +108,29 @@ body {
   color: rgba(0, 0, 0, 0.55);
 }
 
-/* ============================= */
-/* MESSAGE CONTAINER */
-/* (No card body anymore) */
-/* ============================= */
+/* =============================
+   MESSAGES (scrolls)
+============================= */
 
 .chat__messages {
   width: min(900px, 95vw);
 
+  flex: 1 1 auto;
+  min-height: 0; /* ✅ critical */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
   background: transparent;
   border: 0;
   box-shadow: none;
-  padding: 0;
+  padding: 0 0 8px;
 
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* ============================= */
-/* MESSAGE ROW */
-/* ============================= */
-
+/* message rows */
 .msg {
   display: flex;
   width: 100%;
@@ -108,10 +144,7 @@ body {
   justify-content: flex-end;
 }
 
-/* ============================= */
-/* MESSAGE BUBBLE */
-/* ============================= */
-
+/* bubbles */
 .msg__bubble {
   max-width: min(680px, 85%);
   padding: 14px 16px;
@@ -137,10 +170,7 @@ body {
   color: #fff;
 }
 
-/* ============================= */
-/* TYPING INDICATOR */
-/* ============================= */
-
+/* typing indicator */
 .typing {
   display: flex;
   justify-content: flex-start;
@@ -160,26 +190,15 @@ body {
   background: #666;
   border-radius: 50%;
   animation: typingDot 1.4s infinite ease-in-out;
-
-  &:nth-child(1) { animation-delay: 0s; }
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.4s; }
 }
 
-@keyframes typingDot {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.6;
-  }
-  30% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
-}
+.typing__dot:nth-child(1) { animation-delay: 0s; }
+.typing__dot:nth-child(2) { animation-delay: 0.2s; }
+.typing__dot:nth-child(3) { animation-delay: 0.4s; }
 
-/* ============================= */
-/* PROMPT INPUT */
-/* ============================= */
+/* =============================
+   PROMPT (sticky inside chat)
+============================= */
 
 .prompt {
   width: min(900px, 95vw);
@@ -188,6 +207,12 @@ body {
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 14px;
+
+  position: sticky;
+  bottom: 0;
+
+  padding: 10px 0 6px;
+  background: transparent;
 }
 
 .prompt__input {
@@ -198,7 +223,6 @@ body {
   padding: 0 20px;
   font-size: 16px;
   outline: none;
-
   transition: all 0.2s ease;
 }
 
@@ -210,8 +234,6 @@ body {
 .prompt__input:disabled {
   opacity: 0.7;
 }
-
-/* SEND BUTTON */
 
 .prompt__send {
   width: 54px;
@@ -246,86 +268,141 @@ body {
   font-size: 18px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* =============================
+   FOOTER
+============================= */
+app-footer {
+  flex: 0 0 auto;
+  padding: 8px 0 16px;
 }
-
-/* ============================= */
-/* FOOTER */
-/* ============================= */
 
 .footer {
   text-align: center;
   color: rgba(0, 0, 0, 0.65);
   font-size: 12px;
-  padding-top: 20px;
 }
 
-/* ============================= */
-/* ANIMATIONS */
-/* ============================= */
+/* =============================
+   ANIMATIONS
+============================= */
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* =========================
+   TABLET
+========================= */
+@media (max-width: 900px) {
+  .chat {
+    padding: 18px 16px 14px;
+    gap: 18px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .chat__messages,
+  .prompt {
+    width: min(900px, 100%);
+  }
+
+  .msg__bubble {
+    max-width: 92%;
   }
 }
 
-.layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
+/* =========================
+   PHONE VIEW (sidebar drawer)
+========================= */
+@media (max-width: 640px) {
+  /* sidebar becomes overlay drawer */
+  .sidebar-shell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 82vw;
+    max-width: 320px;
+    z-index: 60;
+
+    background: transparent;
+    flex: 0 0 auto;
+  }
+
+  /* chat spacing */
+  .chat {
+    padding: 14px 12px 12px;
+    gap: 14px;
+  }
+
+  .chat__header {
+    padding-top: 70px;
+  }
+
+  .headline {
+    font-size: 28px;
+  }
+
+  .sub {
+    font-size: 12px;
+  }
+
+  .prompt {
+    gap: 10px;
+  }
+
+  .prompt__input {
+    height: 52px;
+    border-radius: 16px;
+    padding: 0 14px;
+    font-size: 15px;
+  }
+
+  .prompt__send {
+    width: 46px;
+    height: 46px;
+  }
+
+  .prompt__arrow {
+    font-size: 22px;
+  }
 }
 
-.chatbox {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
+/* =========================
+   VERY SMALL PHONES
+========================= */
+@media (max-width: 420px) {
+  .chat {
+    padding: 12px 10px 10px;
+  }
 
-/* ✅ Don't add padding on chatbox itself that would push topbar */
-.chat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0 40px 20px;  /* padding only inside chat area */
-}
+  .chat__header {
+    padding-top: 56px;
+  }
 
-/* ✅ This must NOT have margin-top: 120px anymore */
-.chat__header {
-  text-align: center;
-  margin-top: 0;         /* ✅ prevent pushing down */
-  padding-top: 120px;    /* ✅ if you still want header lower, use padding here */
-}
+  .msg__bubble {
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
 
-.chatbox--full {
-  width: 100%;
-}
+  .prompt__input {
+    height: 48px;
+    font-size: 14px;
+  }
 
-.layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* controls sidebar width */
-.sidebar-shell {
-  width: 320px;            /* sidebar width */
-  flex: 0 0 auto;
-  transition: width 0.25s ease;
-  overflow: hidden;        /* hides sidebar content when closed */
-}
-
-/* closed state = no sidebar space */
-.sidebar-shell--closed {
-  width: 0;
+  .prompt__send {
+    width: 44px;
+    height: 44px;
+  }
 }
