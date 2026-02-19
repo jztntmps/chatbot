@@ -7,7 +7,7 @@
     <header class="modal__header">
       <h2 id="modal-title" class="modal__title">Archived Chats</h2>
       <div class="modal__header-actions">
-        <button class="icon-btn" type="button" aria-label="Restore selected">
+        <button class="icon-btn" type="button" aria-label="Restore selected" title="Unarchive">
           <img src="/assets/unarchive.png" alt="Restore" />
         </button>
         <button class="icon-btn icon-btn--danger" type="button" aria-label="Delete selected">
@@ -33,18 +33,18 @@
         <span class="archive__label archive__label--action">Action</span>
       </div>
 
-      <div class="archive__row" *ngFor="let row of rows">
-        <label class="checkbox">
-          <input type="checkbox" [(ngModel)]="row.checked" />
+      <div class="archive__row" *ngFor="let row of rows" (click)="goToPreview()">
+        <label class="checkbox" (click)="$event.stopPropagation()">
+          <input type="checkbox" [(ngModel)]="row.checked" (click)="$event.stopPropagation()" />
           <span></span>
         </label>
         <span class="archive__name">{{ row.name }}</span>
         <span class="archive__date">{{ row.date }}</span>
         <div class="archive__actions">
-          <button class="icon-btn" type="button" aria-label="Restore chat">
+          <button class="icon-btn" type="button" aria-label="Restore chat" title="Unarchive" (click)="$event.stopPropagation(); goToPreview();">
             <img src="/assets/unarchive.png" alt="Restore" />
           </button>
-          <button class="icon-btn icon-btn--danger" type="button" aria-label="Delete chat">
+          <button class="icon-btn icon-btn--danger" type="button" aria-label="Delete chat" (click)="$event.stopPropagation();">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M5 6l.6 9.2c.05.8.7 1.4 1.5 1.4h5.8c.8 0 1.45-.6 1.5-1.4L15 6" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M8.5 9.5v5M11.5 9.5v5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>

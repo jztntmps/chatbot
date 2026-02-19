@@ -308,6 +308,16 @@
   background: rgba(180, 35, 24, 0.10);
 }
 
+.settings-menu__item--logout {
+  color: #000;
+}
+
+.settings-menu__icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 /* =========================
    MOBILE
 ========================= */
