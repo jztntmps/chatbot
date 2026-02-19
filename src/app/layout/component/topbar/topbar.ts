@@ -14,6 +14,7 @@ export class Topbar implements OnInit, OnDestroy {
   @Output() login = new EventEmitter<void>();
   @Output() signup = new EventEmitter<void>();
   @Output() newChat = new EventEmitter<void>();
+  @Output() toggleSidebar = new EventEmitter<void>(); 
 
   today = '';
   private timer?: number;

@@ -1,13 +1,19 @@
 /* container */
 .topbar {
+  margin-top: -30px;
   height: 72px;
-  padding: 0 28px;
+  padding: 6px 28px 0; /* ✅ slight move up (less top space) */
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   background: transparent;
+
+  /* optional: keeps it on top when messages scroll */
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 /* when NOT logged in: push buttons to the top-right */
@@ -58,10 +64,11 @@
   background: linear-gradient(180deg, #eeeeee 0%, #d9d9d9 100%);
 }
 
-/* ===== Logged-in layout styles (optional but nice) ===== */
+/* ===== Logged-in layout styles ===== */
 .topbar__left {
   display: flex;
   align-items: center;
+  gap: 14px; /* ✅ adds gap between menu and New Chat */
 }
 
 .new-chat {
@@ -84,12 +91,16 @@
   font-weight: 800;
 }
 
+/* ✅ date moved slightly to the right (not center) */
 .topbar__center {
   font-size: 16px;
   font-weight: 500;
   color: #2b2b2b;
+
+  transform: translateX(90px); /* ✅ move date to the right */
 }
 
+/* right side */
 .topbar__right {
   display: flex;
   align-items: center;
@@ -101,6 +112,7 @@
   gap: 6px;
   cursor: pointer;
 }
+
 .dots span {
   width: 6px;
   height: 6px;
@@ -112,8 +124,10 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  margin-left: -30px;
   cursor: pointer;
 }
+
 .menu span {
   width: 22px;
   height: 2px;

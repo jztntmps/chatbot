@@ -1,75 +1,82 @@
 <main class="login">
   <div class="login__container">
 
-    <!-- LEFT -->
+    <!-- LEFT SIDE -->
     <div class="login__left">
       <div class="robot">
-
-        <!-- Body -->
         <img
           src="/assets/mini_bot.png"
           alt="Mini Bot"
           class="robot__body"
         />
-
-        <img src="/assets/mini_arm.png" alt="Mini Arm" class="robot__right" />
-
-
+        <img
+          src="/assets/mini_arm.png"
+          alt="Mini Arm"
+          class="robot__right"
+        />
       </div>
     </div>
 
-    <!-- RIGHT -->
+    <!-- RIGHT SIDE -->
     <div class="login__right">
-      <h1 class="login__title">Welcome!</h1>
+      <h1 class="login__title">Welcome Back</h1>
 
-      <form class="login__form">
+      <form class="login__form" (ngSubmit)="login()" autocomplete="off">
+
         <!-- EMAIL -->
         <div class="field">
           <span class="field__icon">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor"
-                d="M20 4H4c-1.1 0-2 .9-2 2v12c0
-                1.1.9 2 2 2h16c1.1 0 2-.9
-                2-2V6c0-1.1-.9-2-2-2zm0
-                4-8 5-8-5V6l8 5 8-5v2z"/>
-            </svg>
+            ✉
           </span>
-          <input type="email" placeholder="Email" class="field__input" />
+
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="Email"
+            class="field__input"
+            required
+          />
         </div>
 
         <!-- PASSWORD -->
         <div class="field">
           <span class="field__icon">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor"
-                d="M12 17a2 2 0 0 0 2-2v-1a2
-                2 0 0 0-4 0v1a2 2 0 0 0 2
-                2zm6-7h-1V7a5 5 0 0
-                0-10 0v3H6c-1.1 0-2 .9-2
-                2v8c0 1.1.9 2 2
-                2h12c1.1 0 2-.9
-                2-2v-8c0-1.1-.9-2-2-2zm-3
-                0H9V7a3 3 0 0 1 6 0v3z"/>
-            </svg>
+            🔒
           </span>
 
-          <input type="password" placeholder="Password" class="field__input" />
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="Password"
+            class="field__input"
+            required
+          />
 
-          <button type="button" class="field__eye">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor"
-                d="M12 5c-7 0-10 7-10 7s3 7
-                10 7 10-7 10-7-3-7-10-7z"/>
-            </svg>
+          <button
+            type="button"
+            class="field__eye"
+            (click)="togglePassword()"
+          >
+            {{ showPassword ? '🙈' : '👁' }}
           </button>
         </div>
 
-        <button type="submit" class="login__btn">Login</button>
+        <!-- ERROR MESSAGE -->
+        <p class="login__error" *ngIf="errorMsg">
+          {{ errorMsg }}
+        </p>
+
+        <button type="submit" class="login__btn">
+          Login
+        </button>
 
         <p class="login__signup">
           Don’t have an account?
           <a routerLink="/signup">Sign Up</a>
         </p>
+
       </form>
     </div>
 

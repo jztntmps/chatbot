@@ -13,6 +13,11 @@ export class Login {
   constructor(private router: Router) {}
 
   goToChat() {
+    // do NOT set isLoggedIn
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userEmail');
+
     this.router.navigate(['/chatbox']);
   }
+
 }
