@@ -16,12 +16,14 @@
 
   <!-- RIGHT CONTENT -->
   <main class="chatbox">
-    <app-topbar
-      [isLoggedIn]="isLoggedIn"
-      (login)="goLogin()"
-      (signup)="goSignup()"
-      (toggleSidebar)="toggleSidebar()"
-    ></app-topbar>
+    <div class="topbar-shell">
+      <app-topbar
+        [isLoggedIn]="isLoggedIn"
+        (login)="goLogin()"
+        (signup)="goSignup()"
+        (toggleSidebar)="toggleSidebar()"
+      ></app-topbar>
+    </div>
 
 
     <!-- CHAT AREA -->

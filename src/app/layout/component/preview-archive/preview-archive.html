@@ -1,0 +1,45 @@
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar-shell" *ngIf="isLoggedIn && sidebarOpen">
+    <app-sidebar
+      [isOpen]="sidebarOpen"
+      [username]="userEmail"
+      [chats]="chats"
+      (newChat)="startNewChat()"
+      (openChat)="openChat($event)"
+      (seeAll)="seeAll()"
+      (archive)="goArchive()"
+      (logout)="logout()"
+    ></app-sidebar>
+  </div>
+
+  <!-- RIGHT CONTENT -->
+  <main class="chatbox">
+    <div class="topbar-shell">
+      <app-topbar
+        [isLoggedIn]="isLoggedIn"
+        (login)="goLogin()"
+        (signup)="goSignup()"
+        (toggleSidebar)="toggleSidebar()"
+      ></app-topbar>
+    </div>
+
+    <!-- PREVIEW AREA -->
+    <section class="preview-area">
+      <p>preview-archive works!</p>
+    </section>
+
+    <div class="archive-notice">
+      <p class="archive-notice__text">
+        This conversation is archived. To continue, please unarchive it first.
+      </p>
+      <button class="archive-notice__btn" type="button">
+        <img src="/assets/unarchive_white.png" alt="" aria-hidden="true" />
+        <span>Unarchive</span>
+      </button>
+    </div>
+
+    <app-footer></app-footer>
+  </main>
+</div>

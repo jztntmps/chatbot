@@ -22,4 +22,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./signup/signup').then(m => m.Signup),
   },
+  {
+    path: 'preview-archive',
+    loadComponent: () =>
+      import('./layout/component/preview-archive/preview-archive').then(m => m.PreviewArchive),
+  },
 ];

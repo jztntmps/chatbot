@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap');
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: url('/assets/white.avif') center/cover no-repeat;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-shell {
+  width: 320px;
+  flex: 0 0 320px;
+  overflow: hidden;
+}
+
+.chatbox {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.topbar-shell {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  padding: 12px 16px;
+  background: transparent; /* let the page background show through */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.preview-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px 24px 18px;
+  text-align: center;
+  color: #111;
+}
+
+app-footer {
+  flex: 0 0 auto;
+  padding: 8px 0 16px;
+}
+
+.archive-notice {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.archive-notice__text {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.archive-notice__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.archive-notice__btn img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.archive-notice__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 900px) {
+  .topbar-shell {
+    padding: 10px 12px;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar-shell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 82vw;
+    max-width: 320px;
+    z-index: 60;
+    background: transparent;
+    flex: 0 0 auto;
+  }
+
+  .preview-area {
+    padding: 14px 12px 12px;
+  }
+
+  .preview-area__content {
+    padding: 18px;
+  }
+}

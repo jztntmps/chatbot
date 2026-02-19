@@ -64,15 +64,17 @@
 
     <div class="settings-menu" *ngIf="settingsOpen">
       <button class="settings-menu__item" type="button" (click)="clickArchive()">
-        📁 <span>Archive</span>
+        <img class="settings-menu__icon-img" src="/assets/archive.png" alt="Archive" />
+        <span>Archive</span>
       </button>
 
       <button
-        class="settings-menu__item settings-menu__item--danger"
+        class="settings-menu__item settings-menu__item--logout"
         type="button"
         (click)="clickLogout()"
       >
-        🚪 <span>Logout</span>
+        <img class="settings-menu__icon-img" src="/assets/logout.png" alt="Logout" />
+        <span>Logout</span>
       </button>
     </div>
   </div>
