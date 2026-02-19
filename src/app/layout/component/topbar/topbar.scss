@@ -96,8 +96,8 @@
   font-size: 16px;
   font-weight: 500;
   color: #2b2b2b;
-
-  transform: translateX(-30px); 
+  margin-top: 30px;
+  transform: translateX(0px); 
 }
 
 /* right side */
@@ -116,6 +116,7 @@
 .dots span {
   width: 6px;
   height: 6px;
+  margin-top: 30px;
   border-radius: 50%;
   background: #222;
 }
