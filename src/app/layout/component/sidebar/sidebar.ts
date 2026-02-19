@@ -28,12 +28,9 @@ export class SidebarComponent {
   @Output() newChat = new EventEmitter<void>();
   @Output() openChat = new EventEmitter<string>();
   @Output() seeAll = new EventEmitter<void>();
-
-  // ✅ NEW outputs
   @Output() archive = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
-  // ✅ local UI state
   settingsOpen = false;
 
   trackById(_: number, c: ChatPreview) {
@@ -45,12 +42,17 @@ export class SidebarComponent {
   }
 
   clickArchive() {
-    this.archive.emit();
     this.settingsOpen = false;
+    this.archive.emit();
   }
 
   clickLogout() {
+    this.settingsOpen = false;
     this.logout.emit();
+  }
+
+  selectChat(id: string) {
+    this.openChat.emit(id);
     this.settingsOpen = false;
   }
 }
