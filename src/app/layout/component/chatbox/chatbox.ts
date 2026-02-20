@@ -150,6 +150,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+    console.log('sidebarOpen:', this.sidebarOpen);
     this.cdr.detectChanges();
   }
 

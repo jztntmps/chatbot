@@ -1,23 +1,22 @@
-<div class="layout">
+<div class="layout" [class.layout--sidebar-closed]="isLoggedIn && !sidebarOpen">
 <!-- SIDEBAR -->
-  <div class="sidebar-shell" *ngIf="isLoggedIn && sidebarOpen">
-    <app-sidebar
-      [isOpen]="sidebarOpen"
-      [username]="userEmail"
-      [chats]="chats"
-       [userId]="userId" 
-      (newChat)="startNewChat()"
-      (openChat)="openChat($event)"
-      (seeAll)="seeAll()"
-      (settings)="openSettings()"
-      (archive)="goArchive()"
-      (logout)="logout()"
-     
-      (deleteChatId)="onDeleteChat($event)"
-      (archiveChatId)="onArchiveChat($event)"
-    ></app-sidebar>
-  </div>
-
+<div class="sidebar-shell" *ngIf="isLoggedIn">
+  <app-sidebar
+    [isOpen]="sidebarOpen"
+    [username]="userEmail"
+    [chats]="chats"
+    [userId]="userId"
+    (toggle)="toggleSidebar()"
+    (newChat)="startNewChat()"
+    (openChat)="openChat($event)"
+    (seeAll)="seeAll()"
+    (settings)="openSettings()"
+    (archive)="goArchive()"
+    (logout)="logout()"
+    (deleteChatId)="onDeleteChat($event)"
+    (archiveChatId)="onArchiveChat($event)"
+  ></app-sidebar>
+</div>
   <!-- RIGHT CONTENT -->
   <main class="chatbox">
     <div class="topbar-shell">
@@ -25,7 +24,6 @@
         [isLoggedIn]="isLoggedIn"
         (login)="goLogin()"
         (signup)="goSignup()"
-        (toggleSidebar)="toggleSidebar()"
         [messages]="messages"
         (exportChat)="exportConversationPdf()"
       ></app-topbar>

@@ -20,7 +20,16 @@
 }
 
 .sidebar--closed {
-  transform: translateX(-100%);
+  transform: translateX(calc(-100% + 60px));
+  pointer-events: auto; /* ✅ IMPORTANT: remove none */
+}
+
+/* hide everything except burger when closed */
+.sidebar--closed .profile,
+.sidebar--closed .newchat,
+.sidebar--closed .sidebar-body,
+.sidebar--closed .sidebar-footer {
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -38,7 +47,7 @@
 .sidebar__top {
   position: absolute;
   top: 10px;
-  left: 10px;
+  right: 10px;
 }
 
 .burger {
@@ -355,4 +364,22 @@
     height: 100vh;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   }
+}
+
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.burger {
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.burger__close {
+  font-size: 26px; /* adjust */
+  font-weight: 400;
+  line-height: 1;
 }

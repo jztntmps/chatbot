@@ -58,20 +58,14 @@
             *ngIf="openMenuId === c.id"
             (click)="$event.stopPropagation()"
           >
-            <button
-              class="chat-card__menu-item"
-              type="button"
-              (click)="archiveChat(c.id)"
-            >
-              📁 <span>Archive</span>
+            <button class="chat-card__menu-item" type="button" (click)="archiveChat(c.id)">
+              <img class="menu-icon" src="assets/archive.png" alt="Archive" />
+              <span>Archive</span>
             </button>
 
-            <button
-              class="chat-card__menu-item chat-card__menu-item--danger"
-              type="button"
-              (click)="deleteChat(c.id)"
-            >
-              🗑️ <span>Delete</span>
+            <button class="chat-card__menu-item chat-card__menu-item--danger" type="button" (click)="deleteChat(c.id)">
+              <img class="menu-icon" src="assets/delete.png" alt="Delete" />
+              <span>Delete</span>
             </button>
           </div>
         </div>
