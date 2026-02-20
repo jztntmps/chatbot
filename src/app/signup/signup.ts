@@ -17,6 +17,10 @@ export class Signup {
 
   constructor(private router: Router) {}
 
+  goHome() {
+    this.router.navigate(['/']);
+  }
+
   onSubmit(event: SubmitEvent) {
     event.preventDefault();
 

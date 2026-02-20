@@ -23,6 +23,17 @@
 		0 20px 50px rgba(17, 24, 39, 0.16),
 		0 4px 12px rgba(17, 24, 39, 0.08);
 	border: 1px solid rgba(17, 24, 39, 0.06);
+	position: relative;
+}
+
+.signup__back-icon {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	width: 28px;
+	height: 28px;
+	object-fit: contain;
+	cursor: pointer;
 }
 
 .signup__inner {

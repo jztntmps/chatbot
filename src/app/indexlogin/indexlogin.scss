@@ -31,6 +31,17 @@
     0 4px 12px rgba(17, 24, 39, 0.08);
   border: 1px solid rgba(17, 24, 39, 0.06);
   margin-top: -150px;
+  position: relative;
+}
+
+.login__back-icon {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  cursor: pointer;
 }
 
 /* ============================= */
