@@ -53,20 +53,28 @@
             ⋯
           </button>
 
-          <div
-            class="chat-card__menu"
-            *ngIf="openMenuId === c.id"
-            (click)="$event.stopPropagation()"
-          >
+          <div class="chat-card__menu"
+              *ngIf="openMenuId === c.id"
+              (click)="$event.stopPropagation()">
+
             <button class="chat-card__menu-item" type="button" (click)="archiveChat(c.id)">
               <img class="menu-icon" src="assets/archive.png" alt="Archive" />
               <span>Archive</span>
             </button>
 
-            <button class="chat-card__menu-item chat-card__menu-item--danger" type="button" (click)="deleteChat(c.id)">
+            <!-- ✅ EXPORT (new) -->
+            <button class="chat-card__menu-item" type="button" (click)="exportChat(c.id)">
+              <img class="menu-icon" src="assets/export_icon.png" alt="Export" />
+              <span>Export</span>
+            </button>
+
+            <button class="chat-card__menu-item chat-card__menu-item--danger"
+                    type="button"
+                    (click)="deleteChat(c.id)">
               <img class="menu-icon" src="assets/delete.png" alt="Delete" />
               <span>Delete</span>
             </button>
+
           </div>
         </div>
       </div>

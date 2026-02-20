@@ -22,6 +22,7 @@ body {
 ============================= */
 
 .layout {
+  height: 100vh;
   display: grid;
   grid-template-columns: 280px 1fr;
   transition: grid-template-columns 0.25s ease;
@@ -31,11 +32,15 @@ body {
   grid-template-columns: 60px 1fr; /* matches your collapsed strip */
 }
 
+.layout.layout--no-sidebar {
+  grid-template-columns: 1fr; /* ✅ full width when not logged in */
+}
+
 /* SIDEBAR SHELL (left column) */
 .sidebar-shell {
-  width: 320px;
+  width: 360px;
   height: 100vh;
-  flex: 0 0 320px; /* ✅ fixed, no shrink = no weird white space */
+  flex: 0 0 360px; /* ✅ fixed, no shrink = no weird white space */
   overflow: hidden;
 }
 
