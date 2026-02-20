@@ -119,10 +119,18 @@
   gap: 20px;
 }
 
+.login__profile-icon {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin-bottom: -75px;
+}
+
 .login__title {
   font-size: 36px;
   margin-left: 0;
   font-weight: 800;
+  margin-bottom: -10px;
   width: 100%;
   text-align: center;
   color: #111;
@@ -154,7 +162,8 @@
 .field {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  position: relative;
 
   border-bottom: none;
   padding: 10px 0;
@@ -176,6 +185,7 @@
   border: 0;
   border-bottom: 2px solid rgba(0,0,0,0.2);
   padding: 6px 8px 6px 0; /* shorter field height */
+  padding-right: 36px; /* space for eye icon */
   font-size: 13px;
   width: 100%;
   outline: none;
@@ -184,12 +194,14 @@
 
 /* EYE BUTTON */
 .field__eye {
+  position: absolute;
+  right: 0;
+  bottom: 10px;
   border: none;
   background: transparent;
   cursor: pointer;
   color: #444;
   padding: 4px;
-  margin-bottom: 20px;
 
 }
 
