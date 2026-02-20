@@ -22,6 +22,8 @@
         (login)="goLogin()"
         (signup)="goSignup()"
         (toggleSidebar)="toggleSidebar()"
+        [messages]="messages"
+        (exportChat)="exportConversationPdf()"
       ></app-topbar>
     </div>
 
@@ -41,6 +43,14 @@
           [class.msg--user]="m.role === 'user'"
           [class.msg--ai]="m.role === 'ai'"
         >
+          <!-- ✅ AI avatar (only shows for bot messages) -->
+          <img
+            *ngIf="m.role === 'ai'"
+            class="msg__avatar"
+            src="assets/profile.png"
+            alt="Bot"
+          />
+
           <div class="msg__bubble">{{ m.text }}</div>
         </div>
 
