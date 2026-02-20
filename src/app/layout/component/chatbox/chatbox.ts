@@ -150,6 +150,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+    console.log('sidebarOpen:', this.sidebarOpen);
     this.cdr.detectChanges();
   }
 
@@ -243,7 +244,7 @@ export class Chatbox implements OnInit, OnDestroy {
       this.warnedNoSave = true;
       this.messages.push({
         role: 'ai',
-        text: '⚠️ You are not fully logged in (missing userId). Chat will work, but it won’t be saved.',
+        text: '⚠️ You are in Guest Mode. Messages will work, but they won’t be saved. Login to save conversations.',
       });
     }
 
@@ -252,23 +253,43 @@ export class Chatbox implements OnInit, OnDestroy {
     this.sending = true;
     this.scrollToBottom();
 
+    // =========================
+    // 1) CHAT (Ollama) request
+    // =========================
+    let reply = '';
     try {
-      // 1) get chatbot reply
       const res = await firstValueFrom(
         this.http
           .post<{ reply: string }>(this.API_URL, { message: text })
           .pipe(timeout(120000))
       );
 
-      const reply = (res?.reply ?? '').trim() || '(Empty reply)';
+      reply = (res?.reply ?? '').trim() || '(Empty reply)';
       this.messages.push({ role: 'ai', text: reply });
+    } catch (e) {
+      const err = e as any;
 
-      // 2) SAVE TO DB only if allowed
-      if (canSave) {
+      let msg = '⚠️ Request failed.';
+      if (err?.name === 'TimeoutError') msg = '⚠️ Timed out. Server took too long.';
+      if (err instanceof HttpErrorResponse) {
+        msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
+      }
+
+      this.messages.push({ role: 'ai', text: msg });
+      this.sending = false;
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+      return; // ✅ stop here (no saving if chat failed)
+    }
+
+    // =========================
+    // 2) SAVE (DB) request
+    // =========================
+    if (canSave) {
+      try {
         this.activeConversationId = this.normalizeId(this.activeConversationId);
 
         if (!this.activeConversationId) {
-          // ✅ FIRST MESSAGE ONLY: creates conversation + title
           const created = await firstValueFrom(
             this.convoApi
               .createConversation({
@@ -282,51 +303,33 @@ export class Chatbox implements OnInit, OnDestroy {
           const convoId = this.extractConversationId(created);
           this.activeConversationId = this.normalizeId(convoId);
 
-          console.log('[createConversation] response:', created);
-          console.log('[createConversation] extracted id:', this.activeConversationId);
-
           if (this.activeConversationId) {
             localStorage.setItem('activeConversationId', this.activeConversationId);
-          } else {
-            console.error(
-              '❌ No conversationId returned by backend. Check Conversation model serialization.'
-            );
           }
 
           this.loadConversations();
         } else {
-          // ✅ NEXT MESSAGES: append turns
-          try {
-            await firstValueFrom(
-              this.convoApi
-                .addTurn(this.activeConversationId, {
-                  userMessage: text,
-                  botResponse: reply,
-                })
-                .pipe(timeout(120000))
-            );
-          } catch (turnErr) {
-            console.error('addTurn failed, resetting activeConversationId', turnErr);
-            this.activeConversationId = null;
-            localStorage.removeItem('activeConversationId');
-          }
+          await firstValueFrom(
+            this.convoApi
+              .addTurn(this.activeConversationId, {
+                userMessage: text,
+                botResponse: reply,
+              })
+              .pipe(timeout(120000))
+          );
         }
-      }
-    } catch (e) {
-      const err = e as any;
+      } catch (saveErr) {
+        // ✅ don't show 403/500 as a chat bubble
+        console.warn('Save failed (chat still works):', saveErr);
 
-      let msg = '⚠️ Request failed.';
-      if (err?.name === 'TimeoutError') msg = '⚠️ Timed out. Server took too long.';
-      if (err instanceof HttpErrorResponse) {
-        msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
+        // optional: you can show a small one-time warning instead of bubble
+        // alert('Chat replied, but saving failed. Please login again.');
       }
-
-      this.messages.push({ role: 'ai', text: msg });
-    } finally {
-      this.sending = false;
-      this.cdr.detectChanges();
-      this.scrollToBottom();
     }
+
+    this.sending = false;
+    this.cdr.detectChanges();
+    this.scrollToBottom();
   }
 
   private scrollToBottom(): void {
@@ -636,5 +639,220 @@ export class Chatbox implements OnInit, OnDestroy {
   closeArchiveModal() {
     this.showArchiveModal = false;
     this.cdr.detectChanges();
+  }
+
+    async onExportChat(conversationId: string) {
+    const id = this.normalizeId(conversationId);
+    if (!id) return;
+
+    try {
+      // 1) Load that conversation from backend
+      const convo = await firstValueFrom(
+        this.http.get<any>(`${this.CONVO_BASE}/${id}`).pipe(timeout(120000))
+      );
+
+      // 2) Build messages from turns
+      const turns = convo?.turns || [];
+      const rebuilt: ChatMsg[] = [];
+
+      for (const t of turns) {
+        if (t?.userMessage) rebuilt.push({ role: 'user', text: t.userMessage });
+        if (t?.botResponse) rebuilt.push({ role: 'ai', text: t.botResponse });
+      }
+
+      if (!rebuilt.length) {
+        alert('No messages to export in this conversation.');
+        return;
+      }
+
+      // 3) Use conversation title for filename
+      const title =
+        (convo?.title || this.chats.find(c => c.id === id)?.title || 'conversation').trim();
+
+      await this.exportConversationPdfForMessages(rebuilt, title);
+    } catch (e) {
+      console.error('Export failed', e);
+      alert('Failed to export. Please try again.');
+    }
+  }
+
+  private sanitizeFilename(name: string) {
+    return name
+      .replace(/[\/\\?%*:|"<>]/g, '-') // windows unsafe chars
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60);
+  }
+
+  /** ✅ Same PDF layout, but exports the provided messages + uses title in filename */
+  private async exportConversationPdfForMessages(msgs: ChatMsg[], title: string) {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    const margin = 56;
+    const topMargin = 56;
+    const bottomMargin = 70;
+
+    const logoDataUrl = await this.loadImageAsDataURL('assets/emman.png');
+
+    const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const formatHHMM = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+    const dateIssuedText = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: '2-digit',
+      year: 'numeric',
+    });
+
+    const footerNote =
+      'Note: This transcript is generated for documentation purposes only. Personal identifiers are excluded in compliance with applicable data privacy regulations.';
+
+    const tableX = margin;
+    const tableW = pageW - margin * 2;
+    const colTime = 70;
+    const colSender = 90;
+    const colMsg = tableW - colTime - colSender;
+
+    const headerH = 28;
+    const rowPadY = 8;
+    const lineH = 14;
+
+    const drawHeader = () => {
+      let y = topMargin;
+
+      const logoW = 140;
+      const logoH = 46;
+      const logoX = (pageW - logoW) / 2;
+
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', logoX, y - 8, logoW, logoH);
+      }
+      y += 60;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text('Conversation Transcript', margin, y);
+      y += 18;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      doc.text(`Title: ${title}`, margin, y);
+      y += 14;
+
+      doc.text(`Date Issued: ${dateIssuedText}`, margin, y);
+      doc.setTextColor(0);
+      y += 14;
+
+      doc.setDrawColor(210);
+      doc.line(margin, y, pageW - margin, y);
+      y += 18;
+
+      return y;
+    };
+
+    const drawFooter = () => {
+      doc.setDrawColor(210);
+      doc.line(margin, pageH - bottomMargin + 18, pageW - margin, pageH - bottomMargin + 18);
+
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(90);
+
+      const lines = doc.splitTextToSize(footerNote, pageW - margin * 2);
+      let fy = pageH - bottomMargin + 36;
+
+      for (const line of lines) {
+        if (fy > pageH - 18) break;
+        doc.text(line, margin, fy);
+        fy += 12;
+      }
+
+      doc.setTextColor(0);
+    };
+
+    let y = drawHeader();
+
+    const drawTableHeader = () => {
+      doc.setFillColor(242, 242, 242);
+      doc.setDrawColor(230);
+      doc.rect(tableX, y, tableW, headerH, 'FD');
+
+      doc.line(tableX + colTime, y, tableX + colTime, y + headerH);
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + headerH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(60);
+
+      doc.text('Time', tableX + 10, y + 18);
+      doc.text('Sender', tableX + colTime + 10, y + 18);
+      doc.text('Message', tableX + colTime + colSender + 10, y + 18);
+
+      doc.setTextColor(0);
+      y += headerH;
+    };
+
+    const startNewPage = () => {
+      drawFooter();
+      doc.addPage();
+      y = drawHeader();
+      drawTableHeader();
+    };
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageH - bottomMargin) startNewPage();
+    };
+
+    drawTableHeader();
+
+    const baseTime = new Date();
+    baseTime.setSeconds(0, 0);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    for (let i = 0; i < msgs.length; i++) {
+      const m = msgs[i];
+      const sender = m.role === 'user' ? 'User' : 'Emman';
+      const msgText = (m.text ?? '').trim();
+      if (!msgText) continue;
+
+      const t = new Date(baseTime.getTime() + i * 60_000);
+      const timeStr = formatHHMM(t);
+
+      const msgLines = doc.splitTextToSize(msgText, colMsg - 20);
+      const rowH = Math.max(headerH, msgLines.length * lineH + rowPadY * 2);
+
+      ensureSpace(rowH + 2);
+
+      doc.setDrawColor(230);
+      doc.rect(tableX, y, tableW, rowH);
+
+      doc.line(tableX + colTime, y, tableX + colTime, y + rowH);
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + rowH);
+
+      const textY = y + rowPadY + 11;
+
+      doc.setTextColor(0);
+      doc.text(timeStr, tableX + 10, textY);
+      doc.text(sender, tableX + colTime + 10, textY);
+
+      let ly = textY;
+      for (const line of msgLines) {
+        doc.text(line, tableX + colTime + colSender + 10, ly);
+        ly += lineH;
+      }
+
+      y += rowH;
+    }
+
+    drawFooter();
+
+    const safeTitle = this.sanitizeFilename(title || 'conversation');
+    doc.save(`${safeTitle}.pdf`);
   }
 }

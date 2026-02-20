@@ -32,6 +32,7 @@ export class SidebarComponent {
   @Output() seeAll = new EventEmitter<void>();
   @Output() archive = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
+  @Output() exportChatId = new EventEmitter<string>();
 
   // per chat actions
   @Output() archiveChatId = new EventEmitter<string>();
@@ -58,6 +59,12 @@ export class SidebarComponent {
     this.openMenuId = null;
     this.seeAll.emit();
   }
+
+  exportChat(id: string) {
+  this.settingsOpen = false;
+  this.openMenuId = null;
+  this.exportChatId.emit(id);
+}
 
   clickArchive() {
     this.settingsOpen = false;
