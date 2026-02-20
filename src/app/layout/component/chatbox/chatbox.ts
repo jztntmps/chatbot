@@ -2,11 +2,7 @@ import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
-import {
-  HttpClient,
-  HttpClientModule,
-  HttpErrorResponse,
-} from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 
 import { Topbar } from '../topbar/topbar';
 import { FooterComponent } from '../footer/footer';
@@ -16,8 +12,7 @@ import { SidebarComponent } from '../sidebar/sidebar';
 import { ConversationService } from '../../../services/conversation';
 
 import { firstValueFrom, Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { timeout } from 'rxjs/operators';
+import { filter, timeout } from 'rxjs/operators';
 import { jsPDF } from 'jspdf';
 
 type ChatMsg = { role: 'user' | 'ai'; text: string };
@@ -60,6 +55,9 @@ export class Chatbox implements OnInit, OnDestroy {
 
   private navSub?: Subscription;
   private warnedNoSave = false;
+
+  // archive modal
+  showArchiveModal = false;
 
   constructor(
     private http: HttpClient,
@@ -112,7 +110,6 @@ export class Chatbox implements OnInit, OnDestroy {
     if (this.isLoggedIn && this.userId) {
       this.loadConversations();
       // ⚠️ DO NOT auto-open saved convo here (can cause 500 loop if id is stale)
-      // user can click a chat in sidebar to open it
     } else {
       this.chats = [];
       this.activeConversationId = null;
@@ -135,15 +132,19 @@ export class Chatbox implements OnInit, OnDestroy {
         this.convoApi.getByUser(this.userId).pipe(timeout(120000))
       );
 
-      this.chats = (list || []).map((c: any) => ({
-        id: this.extractConversationId(c) || '',
-        title: c.title || '(Untitled)',
-      })).filter(x => !!x.id);
+      this.chats = (list || [])
+        .filter((c: any) => !c.archived) // ✅ hide archived chats
+        .map((c: any) => ({
+          id: this.extractConversationId(c) || '',
+          title: c.title || '(Untitled)',
+        }))
+        .filter((x) => !!x.id);
 
       this.cdr.detectChanges();
     } catch (e) {
       console.error('Failed to load conversations', e);
       this.chats = [];
+      this.cdr.detectChanges();
     }
   }
 
@@ -158,7 +159,9 @@ export class Chatbox implements OnInit, OnDestroy {
 
     try {
       const convo = await firstValueFrom(
-        this.http.get<any>(`${this.CONVO_BASE}/${normalized}`).pipe(timeout(120000))
+        this.http
+          .get<any>(`${this.CONVO_BASE}/${normalized}`)
+          .pipe(timeout(120000))
       );
 
       this.activeConversationId = this.extractConversationId(convo) || normalized;
@@ -182,8 +185,12 @@ export class Chatbox implements OnInit, OnDestroy {
       this.activeConversationId = null;
       localStorage.removeItem('activeConversationId');
 
-      this.messages.push({ role: 'ai', text: '⚠️ Failed to open conversation (maybe deleted). Starting a new chat.' });
+      this.messages.push({
+        role: 'ai',
+        text: '⚠️ Failed to open conversation (maybe deleted). Starting a new chat.',
+      });
       this.scrollToBottom();
+      this.cdr.detectChanges();
     }
   }
 
@@ -200,6 +207,7 @@ export class Chatbox implements OnInit, OnDestroy {
     localStorage.removeItem('activeConversationId');
 
     this.scrollToBottom();
+    this.cdr.detectChanges();
   }
 
   goLogin() {
@@ -211,7 +219,8 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   goArchive() {
-    console.log('Archive clicked');
+    // show modal (or route if you want)
+    this.openArchiveModal();
   }
 
   logout() {
@@ -256,17 +265,18 @@ export class Chatbox implements OnInit, OnDestroy {
 
       // 2) SAVE TO DB only if allowed
       if (canSave) {
-        // normalize active id (protect from "null"/"undefined")
         this.activeConversationId = this.normalizeId(this.activeConversationId);
 
         if (!this.activeConversationId) {
           // ✅ FIRST MESSAGE ONLY: creates conversation + title
           const created = await firstValueFrom(
-            this.convoApi.createConversation({
-              userId: this.userId,
-              firstUserMessage: text,
-              firstBotResponse: reply,
-            }).pipe(timeout(120000))
+            this.convoApi
+              .createConversation({
+                userId: this.userId,
+                firstUserMessage: text,
+                firstBotResponse: reply,
+              })
+              .pipe(timeout(120000))
           );
 
           const convoId = this.extractConversationId(created);
@@ -278,7 +288,9 @@ export class Chatbox implements OnInit, OnDestroy {
           if (this.activeConversationId) {
             localStorage.setItem('activeConversationId', this.activeConversationId);
           } else {
-            console.error('❌ No conversationId returned by backend. Check Conversation model serialization.');
+            console.error(
+              '❌ No conversationId returned by backend. Check Conversation model serialization.'
+            );
           }
 
           this.loadConversations();
@@ -286,17 +298,17 @@ export class Chatbox implements OnInit, OnDestroy {
           // ✅ NEXT MESSAGES: append turns
           try {
             await firstValueFrom(
-              this.convoApi.addTurn(this.activeConversationId, {
-                userMessage: text,
-                botResponse: reply,
-              }).pipe(timeout(120000))
+              this.convoApi
+                .addTurn(this.activeConversationId, {
+                  userMessage: text,
+                  botResponse: reply,
+                })
+                .pipe(timeout(120000))
             );
           } catch (turnErr) {
-            // ✅ If backend says "Conversation not found", reset and create next time
             console.error('addTurn failed, resetting activeConversationId', turnErr);
             this.activeConversationId = null;
             localStorage.removeItem('activeConversationId');
-            // we won't retry in same send (prevents double-saving)
           }
         }
       }
@@ -336,6 +348,42 @@ export class Chatbox implements OnInit, OnDestroy {
     );
   }
 
+  async onDeleteChat(conversationId: string) {
+    const id = this.normalizeId(conversationId);
+    if (!id) return;
+
+    const ok = confirm('Delete this chat?');
+    if (!ok) {
+      this.cdr.detectChanges();
+      return;
+    }
+
+    try {
+      await firstValueFrom(
+        this.convoApi.deleteConversation(id).pipe(timeout(120000))
+      );
+
+      // ✅ update sidebar list
+      this.chats = this.chats.filter((c) => c.id !== id);
+
+      // ✅ if the deleted chat is currently open, reset the chat UI
+      if (this.activeConversationId === id) {
+        this.activeConversationId = null;
+        localStorage.removeItem('activeConversationId');
+        this.messages = [];
+        this.message = '';
+        this.sending = false;
+      }
+
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Delete failed', e);
+      alert('Failed to delete conversation in database.');
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ✅ PDF export (FIXED: now correctly placed inside class, not inside catch block)
   async exportConversationPdf() {
     if (!this.messages || this.messages.length === 0) {
       alert('No conversation to export yet.');
@@ -416,7 +464,12 @@ export class Chatbox implements OnInit, OnDestroy {
     const drawFooter = () => {
       // Footer divider line
       doc.setDrawColor(210);
-      doc.line(margin, pageH - bottomMargin + 18, pageW - margin, pageH - bottomMargin + 18);
+      doc.line(
+        margin,
+        pageH - bottomMargin + 18,
+        pageW - margin,
+        pageH - bottomMargin + 18
+      );
 
       // Footer note text near bottom
       doc.setFont('helvetica', 'italic');
@@ -427,7 +480,7 @@ export class Chatbox implements OnInit, OnDestroy {
       let fy = pageH - bottomMargin + 36;
 
       for (const line of lines) {
-        if (fy > pageH - 18) break; // safety
+        if (fy > pageH - 18) break;
         doc.text(line, margin, fy);
         fy += 12;
       }
@@ -443,7 +496,12 @@ export class Chatbox implements OnInit, OnDestroy {
       doc.rect(tableX, y, tableW, headerH, 'FD');
 
       doc.line(tableX + colTime, y, tableX + colTime, y + headerH);
-      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + headerH);
+      doc.line(
+        tableX + colTime + colSender,
+        y,
+        tableX + colTime + colSender,
+        y + headerH
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
@@ -458,9 +516,7 @@ export class Chatbox implements OnInit, OnDestroy {
     };
 
     const startNewPage = () => {
-      // finish current page footer
       drawFooter();
-
       doc.addPage();
       y = drawHeader();
       drawTableHeader();
@@ -482,7 +538,7 @@ export class Chatbox implements OnInit, OnDestroy {
     doc.setFontSize(10);
 
     for (let i = 0; i < this.messages.length; i++) {
-      const m = this.messages[i]; // ChatMsg
+      const m = this.messages[i];
       const sender = m.role === 'user' ? 'User' : 'Emman'; // ✅ Assistant -> Emman
       const msgText = (m.text ?? '').trim();
       if (!msgText) continue;
@@ -499,7 +555,12 @@ export class Chatbox implements OnInit, OnDestroy {
       doc.rect(tableX, y, tableW, rowH);
 
       doc.line(tableX + colTime, y, tableX + colTime, y + rowH);
-      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + rowH);
+      doc.line(
+        tableX + colTime + colSender,
+        y,
+        tableX + colTime + colSender,
+        y + rowH
+      );
 
       const textY = y + rowPadY + 11;
 
@@ -516,9 +577,7 @@ export class Chatbox implements OnInit, OnDestroy {
       y += rowH;
     }
 
-    // footer for the last page
     drawFooter();
-
     doc.save(`conversation-${Date.now()}.pdf`);
   }
 
@@ -537,5 +596,45 @@ export class Chatbox implements OnInit, OnDestroy {
       console.warn('Logo load failed:', e);
       return null;
     }
+  }
+
+  // ✅ archive (FIXED: inside class)
+  async onArchiveChat(conversationId: string) {
+    const id = this.normalizeId(conversationId);
+    if (!id) return;
+
+    try {
+      await firstValueFrom(
+        this.convoApi.archiveConversation(id).pipe(timeout(120000))
+      );
+
+      // ✅ Remove from sidebar immediately
+      this.chats = this.chats.filter((c) => c.id !== id);
+
+      // ✅ If archived chat is currently open, reset chat view
+      if (this.activeConversationId === id) {
+        this.activeConversationId = null;
+        localStorage.removeItem('activeConversationId');
+        this.messages = [];
+        this.message = '';
+        this.sending = false;
+      }
+
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Archive failed', e);
+      alert('Failed to archive conversation.');
+      this.cdr.detectChanges();
+    }
+  }
+
+  openArchiveModal() {
+    this.showArchiveModal = true;
+    this.cdr.detectChanges();
+  }
+
+  closeArchiveModal() {
+    this.showArchiveModal = false;
+    this.cdr.detectChanges();
   }
 }
