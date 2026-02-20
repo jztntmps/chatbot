@@ -18,6 +18,7 @@ import { ConversationService } from '../../../services/conversation';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { timeout } from 'rxjs/operators';
+import { jsPDF } from 'jspdf';
 
 type ChatMsg = { role: 'user' | 'ai'; text: string };
 type ChatPreview = { id: string; title: string };
@@ -333,5 +334,208 @@ export class Chatbox implements OnInit, OnDestroy {
       obj.conversation_id ||
       null
     );
+  }
+
+  async exportConversationPdf() {
+    if (!this.messages || this.messages.length === 0) {
+      alert('No conversation to export yet.');
+      return;
+    }
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    const margin = 56;
+    const topMargin = 56;
+    const bottomMargin = 70;
+
+    const logoDataUrl = await this.loadImageAsDataURL('assets/emman.png');
+
+    const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const formatHHMM = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+    const dateIssuedText = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: '2-digit',
+      year: 'numeric',
+    });
+
+    const footerNote =
+      'Note: This transcript is generated for documentation purposes only. Personal identifiers are excluded in compliance with applicable data privacy regulations.';
+
+    // ===== TABLE layout =====
+    const tableX = margin;
+    const tableW = pageW - margin * 2;
+    const colTime = 70;
+    const colSender = 90;
+    const colMsg = tableW - colTime - colSender;
+
+    const headerH = 28;
+    const rowPadY = 8;
+    const lineH = 14;
+
+    // Draw header (logo + title + date + divider) on each page
+    const drawHeader = () => {
+      let y = topMargin;
+
+      // Logo centered (header)
+      const logoW = 140;
+      const logoH = 46;
+      const logoX = (pageW - logoW) / 2;
+
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', logoX, y - 8, logoW, logoH);
+      }
+      y += 60;
+
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text('Conversation Transcript', margin, y);
+      y += 18;
+
+      // Date issued
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      doc.text(`Date Issued: ${dateIssuedText}`, margin, y);
+      doc.setTextColor(0);
+      y += 14;
+
+      // Divider
+      doc.setDrawColor(210);
+      doc.line(margin, y, pageW - margin, y);
+      y += 18;
+
+      return y; // returns start Y for table area
+    };
+
+    const drawFooter = () => {
+      // Footer divider line
+      doc.setDrawColor(210);
+      doc.line(margin, pageH - bottomMargin + 18, pageW - margin, pageH - bottomMargin + 18);
+
+      // Footer note text near bottom
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(90);
+
+      const lines = doc.splitTextToSize(footerNote, pageW - margin * 2);
+      let fy = pageH - bottomMargin + 36;
+
+      for (const line of lines) {
+        if (fy > pageH - 18) break; // safety
+        doc.text(line, margin, fy);
+        fy += 12;
+      }
+
+      doc.setTextColor(0);
+    };
+
+    let y = drawHeader();
+
+    const drawTableHeader = () => {
+      doc.setFillColor(242, 242, 242);
+      doc.setDrawColor(230);
+      doc.rect(tableX, y, tableW, headerH, 'FD');
+
+      doc.line(tableX + colTime, y, tableX + colTime, y + headerH);
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + headerH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(60);
+
+      doc.text('Time', tableX + 10, y + 18);
+      doc.text('Sender', tableX + colTime + 10, y + 18);
+      doc.text('Message', tableX + colTime + colSender + 10, y + 18);
+
+      doc.setTextColor(0);
+      y += headerH;
+    };
+
+    const startNewPage = () => {
+      // finish current page footer
+      drawFooter();
+
+      doc.addPage();
+      y = drawHeader();
+      drawTableHeader();
+    };
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageH - bottomMargin) {
+        startNewPage();
+      }
+    };
+
+    drawTableHeader();
+
+    // synthetic time (since ChatMsg has no createdAt)
+    const baseTime = new Date();
+    baseTime.setSeconds(0, 0);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    for (let i = 0; i < this.messages.length; i++) {
+      const m = this.messages[i]; // ChatMsg
+      const sender = m.role === 'user' ? 'User' : 'Emman'; // ✅ Assistant -> Emman
+      const msgText = (m.text ?? '').trim();
+      if (!msgText) continue;
+
+      const t = new Date(baseTime.getTime() + i * 60_000);
+      const timeStr = formatHHMM(t);
+
+      const msgLines = doc.splitTextToSize(msgText, colMsg - 20);
+      const rowH = Math.max(headerH, msgLines.length * lineH + rowPadY * 2);
+
+      ensureSpace(rowH + 2);
+
+      doc.setDrawColor(230);
+      doc.rect(tableX, y, tableW, rowH);
+
+      doc.line(tableX + colTime, y, tableX + colTime, y + rowH);
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + rowH);
+
+      const textY = y + rowPadY + 11;
+
+      doc.setTextColor(0);
+      doc.text(timeStr, tableX + 10, textY);
+      doc.text(sender, tableX + colTime + 10, textY);
+
+      let ly = textY;
+      for (const line of msgLines) {
+        doc.text(line, tableX + colTime + colSender + 10, ly);
+        ly += lineH;
+      }
+
+      y += rowH;
+    }
+
+    // footer for the last page
+    drawFooter();
+
+    doc.save(`conversation-${Date.now()}.pdf`);
+  }
+
+  private async loadImageAsDataURL(url: string): Promise<string | null> {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('FileReader error'));
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Logo load failed:', e);
+      return null;
+    }
   }
 }

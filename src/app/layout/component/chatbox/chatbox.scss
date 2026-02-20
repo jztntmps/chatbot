@@ -421,3 +421,53 @@ app-footer {
     height: 44px;
   }
 }
+
+/* message row */
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+/* user goes right */
+.msg--user {
+  justify-content: flex-end;
+}
+
+/* ai goes left */
+.msg--ai {
+  justify-content: flex-start;
+}
+
+/* avatar for ai */
+.msg__avatar {
+  width: 34px;
+  height: 37px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 34px;
+  margin-top: 5px;
+}
+
+/* bubble */
+.msg__bubble {
+  max-width: 520px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  line-height: 1.4;
+}
+
+/* AI bubble look (soft) */
+.msg--ai .msg__bubble {
+  background: #f3f3ff;
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* User bubble look (right side) */
+.msg--user .msg__bubble {
+  background: #f3f3ff; /* change if you want darker */
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}

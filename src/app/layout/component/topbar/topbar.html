@@ -11,19 +11,40 @@
     </div>
   </ng-container>
 
-  <!-- LOGGED IN -->
-<ng-template #loggedInBar>
+    <ng-template #loggedInBar>
 
-  <div class="topbar__center">
-    {{ today }}
-  </div>
+      <!-- LEFT SIDE (LOGO) -->
+      <div class="topbar__left">
+        <img src="assets/emman.png" alt="Logo" class="topbar__logo" />
+      </div>
 
-  <div class="topbar__right">
-    <div class="dots" title="More">
-      <span></span><span></span><span></span>
-    </div>
+      <!-- RIGHT SIDE (DATE + DOTS) -->
+      <div class="topbar__right">
+        <div class="topbar__date">
+          {{ today }}
+        </div>
 
-  </div>
-</ng-template>
+        <button class="dots" type="button" (click)="toggleMenu($event)">
+          <span></span><span></span><span></span>
+        </button>
 
+        <div class="dropdown" *ngIf="menuOpen">
+          <button class="dropdown__item" type="button" (click)="onArchive()">
+            <img src="assets/archive.png" class="dropdown__icon" />
+            <span>Archive</span>
+          </button>
+
+          <button class="dropdown__item" type="button" (click)="onExport()">
+            <img src="assets/export_icon.png" class="dropdown__icon" />
+            <span>Export</span>
+          </button>
+
+          <button class="dropdown__item" type="button" (click)="onDelete()">
+            <img src="assets/delete.png" class="dropdown__icon" />
+            <span>Delete</span>
+          </button>
+        </div>
+      </div>
+
+    </ng-template>
 </header>

@@ -2,7 +2,7 @@
 .topbar {
   margin-top: -30px;
   height: 72px;
-  padding: 6px 28px 0; /* ✅ slight move up (less top space) */
+  padding: 6px 28px 0;
 
   display: flex;
   align-items: center;
@@ -10,7 +10,6 @@
 
   background: transparent;
 
-  /* optional: keeps it on top when messages scroll */
   position: sticky;
   top: 0;
   z-index: 50;
@@ -68,7 +67,7 @@
 .topbar__left {
   display: flex;
   align-items: center;
-  gap: 14px; /* ✅ adds gap between menu and New Chat */
+  gap: 14px;
 }
 
 .new-chat {
@@ -91,13 +90,131 @@
   font-weight: 800;
 }
 
-/* ✅ date moved slightly to the right (not center) */
+/* date */
 .topbar__center {
   font-size: 16px;
   font-weight: 500;
   color: #2b2b2b;
+
   margin-top: 30px;
-  transform: translateX(0px); 
+  transform: translateX(0px);
+}
+
+/* right side (IMPORTANT: relative for dropdown anchor) */
+.topbar__right {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ===== 3 DOTS BUTTON ===== */
+.dots {
+  border: none;          /* remove border */
+  outline: none;         /* remove focus outline */
+  box-shadow: none;      /* remove any shadow border */
+
+  background: #f3f3f3;
+  padding: 10px 12px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 30px;
+}
+
+.dots:focus {
+  outline: none;         /* remove blue focus ring */
+}
+
+.dots:hover {
+  filter: brightness(0.98);
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  background: #333;
+  border-radius: 50%;
+}
+/* ===== CARD STYLE DROPDOWN ===== */
+.dropdown {
+  position: absolute;
+  top: 82px; /* 30px dots margin + button height spacing */
+  right: 0;
+
+  width: 100px;
+  padding: 18px 16px;
+
+  background: #efefef;
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  animation: fadeSlide 0.18s ease;
+  z-index: 999;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* items */
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  font-size: 16px;
+  font-weight: 500;
+  color: #222;
+
+  padding: 6px 4px;
+}
+
+.dropdown__item:hover {
+  opacity: 0.75;
+}
+
+/* icons */
+.dropdown__icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* left side */
+.topbar__left {
+  display: flex;
+  align-items: center;
+}
+
+/* logo */
+.topbar__logo {
+  height: 42px;   /* adjust size if needed */
+  width: auto;
+  object-fit: contain;
+  margin-top: 30px;
+  margin-left: -30px;
 }
 
 /* right side */
@@ -105,33 +222,13 @@
   display: flex;
   align-items: center;
   gap: 18px;
+  margin-left: auto; /* pushes right side fully right */
 }
 
-.dots {
-  display: flex;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.dots span {
-  width: 6px;
-  height: 6px;
+/* date styling */
+.topbar__date {
+  font-size: 15px;
+  font-weight: 500;
+  color: #2b2b2b;
   margin-top: 30px;
-  border-radius: 50%;
-  background: #222;
-}
-
-.menu {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-left: -30px;
-  cursor: pointer;
-}
-
-.menu span {
-  width: 22px;
-  height: 2px;
-  border-radius: 2px;
-  background: #222;
 }
