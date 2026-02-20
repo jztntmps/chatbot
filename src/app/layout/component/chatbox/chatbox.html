@@ -5,12 +5,16 @@
       [isOpen]="sidebarOpen"
       [username]="userEmail"
       [chats]="chats"
+       [userId]="userId" 
       (newChat)="startNewChat()"
       (openChat)="openChat($event)"
       (seeAll)="seeAll()"
       (settings)="openSettings()"
       (archive)="goArchive()"
       (logout)="logout()"
+     
+      (deleteChatId)="onDeleteChat($event)"
+      (archiveChatId)="onArchiveChat($event)"
     ></app-sidebar>
   </div>
 

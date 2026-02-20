@@ -71,8 +71,9 @@
   align-items: center;
   gap: 10px;
   padding: 8px 6px;
-}
 
+
+}
 .archive__head {
   font-weight: 600;
   color: #3f3f46;
@@ -83,6 +84,8 @@
 .archive__row {
   border-radius: 10px;
   transition: background 120ms ease;
+  cursor: pointer;         // ✅ pointer
+  user-select: none;
 }
 
 .archive__row:hover {

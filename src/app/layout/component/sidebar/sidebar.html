@@ -1,12 +1,11 @@
-<aside class="sidebar" [class.sidebar--closed]="!isOpen">
+<aside class="sidebar" [class.sidebar--closed]="!isOpen" (click)="$event.stopPropagation()">
 
-  <!-- HEADER -->
   <div class="sidebar-header">
     <div class="sidebar__top">
       <button
         class="burger"
         type="button"
-        (click)="toggle.emit()"
+        (click)="toggle.emit(); $event.stopPropagation()"
         aria-label="Toggle sidebar"
       >
         ☰
@@ -22,47 +21,89 @@
       </div>
     </div>
 
-    <button class="newchat" type="button" (click)="settingsOpen = false; newChat.emit()">
+    <button
+      class="newchat"
+      type="button"
+      (click)="settingsOpen = false; openMenuId = null; newChat.emit()"
+    >
       <span class="newchat__plus">＋</span>
       <span class="newchat__text">New Chat</span>
     </button>
   </div>
 
-  <!-- BODY (SCROLLABLE) -->
   <div class="sidebar-body">
     <div class="list">
 
-        <button
-        class="item"
-        type="button"
+      <div
+        class="chat-card"
         *ngFor="let c of (showAll ? chats : (chats | slice:0:3)); trackBy: trackById"
-        (click)="settingsOpen = false; openChat.emit(c.id)"
-        >
-        <span class="item__title">{{ c.title }}</span>
-        <span class="item__dots">⋯</span>
-        </button>
+        (click)="selectChat(c.id)"
+      >
+        <div class="chat-card__title">
+          {{ c.title }}
+        </div>
 
-        <button
+        <div class="chat-card__actions">
+          <button
+            class="chat-card__dots"
+            type="button"
+            (click)="openDots($event, c.id)"
+            aria-label="More actions"
+          >
+            ⋯
+          </button>
+
+          <div
+            class="chat-card__menu"
+            *ngIf="openMenuId === c.id"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              class="chat-card__menu-item"
+              type="button"
+              (click)="archiveChat(c.id)"
+            >
+              📁 <span>Archive</span>
+            </button>
+
+            <button
+              class="chat-card__menu-item chat-card__menu-item--danger"
+              type="button"
+              (click)="deleteChat(c.id)"
+            >
+              🗑️ <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
         class="seeall"
         type="button"
         *ngIf="chats.length > 3"
-        (click)="toggleSeeAll()"
-        >
+        (click)="toggleSeeAll(); $event.stopPropagation()"
+      >
         {{ showAll ? 'Show Less' : 'See All' }}
-        </button>
-
+      </button>
 
     </div>
   </div>
 
-  <!-- FOOTER -->
   <div class="sidebar-footer">
-    <button class="settings" type="button" (click)="toggleSettings()">
+    <button
+      class="settings"
+      type="button"
+      (click)="toggleSettings(); $event.stopPropagation()"
+    >
       <span class="settings__icon">⚙</span>
       <span class="settings__text">Settings</span>
     </button>
 
-    <div class="settings-menu" *ngIf="settingsOpen">
+    <div
+      class="settings-menu"
+      *ngIf="settingsOpen"
+      (click)="$event.stopPropagation()"
+    >
       <button class="settings-menu__item" type="button" (click)="clickArchive()">
         <img class="settings-menu__icon-img" src="/assets/archive.png" alt="Archive" />
         <span>Archive</span>
@@ -81,4 +122,10 @@
 
 </aside>
 
-<app-modal *ngIf="showModal" (close)="closeModal()"></app-modal>
+<app-modal
+  *ngIf="showModal"
+  [userId]="userId"
+  (close)="showModal=false"
+  (changed)="loadConversations()">
+</app-modal>
+

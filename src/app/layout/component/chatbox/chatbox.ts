@@ -129,22 +129,26 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   private async loadConversations() {
-    try {
-      const list: any[] = await firstValueFrom(
-        this.convoApi.getByUser(this.userId).pipe(timeout(120000))
-      );
+  try {
+    const list: any[] = await firstValueFrom(
+      this.convoApi.getByUser(this.userId).pipe(timeout(120000))
+    );
 
-      this.chats = (list || []).map((c: any) => ({
+    this.chats = (list || [])
+      .filter((c: any) => !c.archived) // ✅ hide archived chats
+      .map((c: any) => ({
         id: this.extractConversationId(c) || '',
         title: c.title || '(Untitled)',
-      })).filter(x => !!x.id);
+      }))
+      .filter(x => !!x.id);
 
-      this.cdr.detectChanges();
-    } catch (e) {
-      console.error('Failed to load conversations', e);
-      this.chats = [];
-    }
+    this.cdr.detectChanges();
+  } catch (e) {
+    console.error('Failed to load conversations', e);
+    this.chats = [];
   }
+}
+
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
@@ -334,4 +338,73 @@ export class Chatbox implements OnInit, OnDestroy {
       null
     );
   }
+  async onDeleteChat(conversationId: string) {
+  const id = this.normalizeId(conversationId);
+  if (!id) return;
+
+  const ok = confirm('Delete this chat?');
+  if (!ok) {
+    this.cdr.detectChanges();
+    return;
+  }
+
+  try {
+    await firstValueFrom(this.convoApi.deleteConversation(id).pipe(timeout(120000)));
+
+    // ✅ update sidebar list
+    this.chats = this.chats.filter(c => c.id !== id);
+
+    // ✅ if the deleted chat is currently open, reset the chat UI
+    if (this.activeConversationId === id) {
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+      this.messages = [];
+      this.message = '';
+      this.sending = false;
+    }
+
+    this.cdr.detectChanges();
+  } catch (e) {
+    console.error('Delete failed', e);
+    alert('Failed to delete conversation in database.');
+  }
 }
+
+// OPTIONAL: if you want archive too
+async onArchiveChat(conversationId: string) {
+  const id = this.normalizeId(conversationId);
+  if (!id) return;
+
+  try {
+    await firstValueFrom(
+      this.convoApi.archiveConversation(id).pipe(timeout(120000))
+    );
+
+    // ✅ Remove from sidebar immediately
+    this.chats = this.chats.filter(c => c.id !== id);
+
+    // ✅ If archived chat is currently open, reset chat view
+    if (this.activeConversationId === id) {
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+      this.messages = [];
+      this.message = '';
+      this.sending = false;
+    }
+
+    this.cdr.detectChanges();
+  } catch (e) {
+    console.error('Archive failed', e);
+    alert('Failed to archive conversation.');
+  }
+}
+
+showArchiveModal = false;
+
+openArchiveModal() {
+  this.showArchiveModal = true;
+}
+
+}
+
+
