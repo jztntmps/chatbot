@@ -29,6 +29,10 @@ export class IndexLogin {
     this.showPassword = !this.showPassword;
   }
 
+  goHome() {
+    this.router.navigate(['/']);
+  }
+
   clearError() {
     if (this.errorMsg) this.errorMsg = '';
   }
