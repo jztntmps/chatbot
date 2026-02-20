@@ -322,7 +322,7 @@ body {
   gap: 5px;
 
   background-color: #7BB3EB;
-  box-shadow: 1px 3px 0px #5a8fd4;
+  box-shadow: 1px 3px 0px #284a77;
 
   transition-duration: 0.3s;
 
@@ -332,16 +332,16 @@ body {
 
   &:active {
     transform: translate(2px, 0px);
-    box-shadow: 0px 1px 0px #5a8fd4;
+    box-shadow: 0px 1px 0px #0d1d31;
     padding-bottom: 1px;
   }
 
-  &--ghost {
-    background-color: #7BB3EB;
+  &--try {
+    background-color: #436B92;
   }
 
-  &--solid {
-    background-color: #7BB3EB;
+  &--signin {
+    background-color: #5a8fd4;
   }
 }
 

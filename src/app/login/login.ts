@@ -15,4 +15,8 @@ export class Login {
   goToChat() {
     this.router.navigate(['/chatbox']);
   }
+
+  goToIndexLogin() {
+    this.router.navigate(['/indexlogin']);
+  }
 }
