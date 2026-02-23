@@ -238,12 +238,21 @@ app-topbar {
   background: transparent;
 }
 
+.prompt__field {
+  position: relative;
+  width: 100%;
+}
+
 .prompt__input {
+  width: 100%;
   height: 40px;
   border-radius: 18px;
   border: none;
   background: rgba(230, 231, 235, 0.9);
+
   padding: 0 20px;
+  padding-right: 72px; /* ✅ space for mic + wave */
+
   font-size: 16px;
   outline: none;
   transition: all 0.2s ease;
@@ -354,7 +363,6 @@ app-footer {
    PHONE VIEW (sidebar drawer)
 ========================= */
 @media (max-width: 640px) {
-  /* sidebar becomes overlay drawer */
   .sidebar-shell {
     position: fixed;
     top: 0;
@@ -369,7 +377,6 @@ app-footer {
     flex: 0 0 auto;
   }
 
-  /* chat spacing */
   .chat {
     padding: 14px 12px 12px;
     gap: 14px;
@@ -395,6 +402,7 @@ app-footer {
     height: 52px;
     border-radius: 16px;
     padding: 0 14px;
+    padding-right: 72px;
     font-size: 15px;
   }
 
@@ -429,6 +437,7 @@ app-footer {
   .prompt__input {
     height: 48px;
     font-size: 14px;
+    padding-right: 72px;
   }
 
   .prompt__send {
@@ -482,7 +491,7 @@ app-footer {
 
 /* User bubble look (right side) */
 .msg--user .msg__bubble {
-  background: #f3f3ff; /* change if you want darker */
+  background: #f3f3ff;
   color: #222;
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
@@ -589,56 +598,161 @@ app-footer {
 }
 
 /* =============================
-   INPUT WITH MIC INSIDE
+   MIC STYLE — UPDATED (BLACK OUTLINE + DOWN)
 ============================= */
 
-.prompt__field {
-  position: relative;
-  width: 100%;
-}
-
-/* add space on right for mic */
-.prompt__input {
-  width: 100%;
-  padding-right: 48px; /* space for mic */
-}
-
-/* mic button inside input */
 .prompt__mic {
   position: absolute;
   right: 10px;
-  top: 50%;
+
+  /* ✅ moved down slightly */
+  top: calc(50% + 4px);
   transform: translateY(-50%);
 
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 64px;
+  height: 40px;
   border: 0;
+  background: transparent;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  cursor: pointer;
+}
+
+/* left circle (no background, black outline) */
+.prompt__micIcon {
+  width: 36px;
+  height: 100px;
+  border-radius: 999px;
 
   display: grid;
   place-items: center;
 
   background: transparent;
-  cursor: pointer;
-  font-size: 16px;
-
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
-.prompt__mic:hover {
-  background: rgba(0, 0, 0, 0.08);
+.prompt__micIcon svg {
+  width: 18px;
+  height: 18px;
+
+  /* ✅ force black icon */
+  fill: #111;
+  stroke: #111;
+  opacity: 1;
 }
 
-/* active (recording) state */
-.prompt__mic--active {
-  background: #ff4d4f;
-  color: white;
-  animation: pulseMic 1.2s infinite;
+/* right circle (wave) no background, black outline */
+.prompt__micWave {
+  width: 36px;
+  height: 100px;
+  border-radius: 999px;
+
+  background: transparent;
+
+  position: relative;
+  overflow: hidden;
+
+  transition: transform 0.15s ease;
 }
 
-/* pulse animation */
-@keyframes pulseMic {
-  0% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.5); }
-  70% { box-shadow: 0 0 0 8px rgba(255, 77, 79, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
+/* static wave bars in black */
+.prompt__micWave::before {
+  content: "";
+  position: absolute;
+  inset: 9px 10px;
+
+  background:
+    linear-gradient(#111 0 0) left 0 top 50% / 2px 8px no-repeat,
+    linear-gradient(#111 0 0) left 7px top 50% / 2px 14px no-repeat,
+    linear-gradient(#111 0 0) left 14px top 50% / 2px 10px no-repeat,
+    linear-gradient(#111 0 0) left 21px top 50% / 2px 16px no-repeat;
+
+  transform: translateY(-50%);
+  top: 50%;
+}
+
+/* hover lift */
+.prompt__mic:hover .prompt__micIcon,
+.prompt__mic:hover .prompt__micWave {
+  transform: scale(1.03);
+}
+
+/* recording animation */
+.prompt__mic--active .prompt__micWave::before {
+  animation: waveBars 0.9s infinite ease-in-out;
+}
+
+/* ============================
+   Sidebar-closed: shift content left + keep send close
+============================ */
+
+/* Use asymmetric gutters so the whole content shifts left */
+.chatbox {
+  --gutter-left: 24px;
+  --gutter-right: 24px;
+  --maxw: 900px;
+}
+
+/* Sidebar collapsed -> move content slightly LEFT */
+.layout.layout--sidebar-closed .chatbox {
+  --gutter-left: 12px;   /* smaller left padding */
+  --gutter-right: 34px;  /* larger right padding -> content shifts left */
+}
+
+/* Topbar/logo padding reacts to gutters */
+.topbar-shell {
+  padding-left: var(--gutter-left) !important;
+  padding-right: var(--gutter-right) !important;
+}
+
+/* Scrollbar stays at far right */
+.chat__messages {
+  width: 100% !important;
+  padding: 0 var(--gutter-right) 14px var(--gutter-left) !important;
+  scrollbar-gutter: stable;
+}
+
+/* Keep bubbles constrained & aligned (but shifted by gutter asymmetry) */
+.chat__messages > .msg,
+.chat__messages > .typing,
+.chat__messages > .editbar {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ✅ Prompt: keep send button close to input */
+.prompt {
+  width: 100% !important;
+  padding-left: var(--gutter-left) !important;
+  padding-right: var(--gutter-right) !important;
+
+  max-width: var(--maxw);
+  margin-left: auto;
+  margin-right: auto;
+
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+/* If your send button looks far, force it to sit tight */
+.prompt__send {
+  justify-self: end;
+}
+
+/* Mobile keep tighter gutters */
+@media (max-width: 640px) {
+  .chatbox {
+    --gutter-left: 12px;
+    --gutter-right: 12px;
+    --maxw: 100%;
+  }
 }

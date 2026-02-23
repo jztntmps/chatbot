@@ -20,14 +20,16 @@
   /* ✅ do NOT clip dropdown */
   overflow: visible;
 
-  transition: transform 0.25s ease;
+  transition: width 0.25s ease; /* ✅ changed from transform */
 }
 
+/* ✅ FIXED: real collapse (no translate) */
 .sidebar--closed {
-  transform: translateX(calc(-100% + 60px));
+  width: 60px;
   pointer-events: auto;
 }
 
+/* ❌ REMOVE this old block (it hides everything)
 .sidebar--closed .profile,
 .sidebar--closed .newchat,
 .sidebar--closed .sidebar-body,
@@ -35,6 +37,7 @@
   opacity: 0;
   pointer-events: none;
 }
+*/
 
 /* =========================
    HEADER
@@ -50,10 +53,21 @@
   z-index: 1; /* ✅ keep below body dropdown */
 }
 
+/* =========================
+   TOP BAR (profile left, burger right)
+========================= */
+
 .sidebar__top {
   position: absolute;
   top: 10px;
+  left: 10px;
   right: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* 🔥 left & right separation */
+
+  z-index: 50;
 }
 
 .burger {
@@ -99,9 +113,8 @@
 
 .newchat {
   width: 100%;
-  max-width: 170px;   /* ⬅ smaller width */
+  max-width: 170px;
   margin: 0 auto;
-  
 
   border: 0;
   border-radius: 999px;
@@ -112,9 +125,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;           /* slightly tighter spacing */
+  gap: 6px;
 
-  font-size: 13px;    /* slightly smaller text */
+  font-size: 13px;
   cursor: pointer;
 
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
@@ -136,13 +149,10 @@
 .sidebar-body {
   min-height: 0;
 
-  /* ✅ scroll only here */
   overflow-y: auto;
   overflow-x: visible;
 
   position: relative;
-
-  /* ✅ KEY FIX: put body ABOVE header/footer stacking */
   z-index: 5;
 
   scrollbar-width: none;
@@ -152,7 +162,6 @@
   display: none;
 }
 
-/* ✅ list must allow dropdown to escape */
 .list {
   padding: 10px 10px 20px;
   display: flex;
@@ -231,12 +240,7 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
-/* ✅ BEST: lift the whole card when its dropdown is open (Chrome/Edge/Safari support) */
-.chat-card:has(.chat-card__menu) {
-  z-index: 9998;
-}
-
-/* ✅ fallback: when you clicked the dots (focus inside), lift the card */
+.chat-card:has(.chat-card__menu),
 .chat-card:focus-within {
   z-index: 9998;
 }
@@ -260,7 +264,6 @@
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(8px);
 
-  /* ✅ make sure it's above siblings */
   z-index: 9999;
 }
 
@@ -325,8 +328,7 @@
 .sidebar-footer {
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 
-  padding: 8px 8px 2px;  /* ⬅ dagdag bottom padding */
-
+  padding: 8px 8px 2px;
   position: relative;
   background: #f6f6f8;
 
@@ -412,23 +414,19 @@
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   }
 }
+
 /* =========================
    FIX: SETTINGS MENU CLICK (Archive not clickable)
 ========================= */
 
-/* When settings menu is open, lift the footer above the body */
 .sidebar-footer:has(.settings-menu) {
-  z-index: 20; /* higher than .sidebar-body (z-index: 5) */
+  z-index: 20;
 }
 
-/* Optional but recommended:
-   Disable clicks on the body while settings is open
-   so walang humaharang sa menu clicks */
 .sidebar:has(.settings-menu) .sidebar-body {
   pointer-events: none;
 }
 
-/* Ensure menu itself remains clickable */
 .sidebar:has(.settings-menu) .settings-menu,
 .sidebar:has(.settings-menu) .settings-menu * {
   pointer-events: auto;
@@ -436,8 +434,8 @@
 
 /* ✅ Bigger avatar circle */
 .avatar {
-  width: 64px;   /* from 44px */
-  height: 64px;  /* from 44px */
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   overflow: hidden;
   display: grid;
@@ -446,30 +444,29 @@
   background: linear-gradient(135deg, #e1dbdb, #fffefe);
 }
 
-/* ✅ Make sure image also fits bigger */
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* ✅ Bigger letter inside */
 .avatar__fallback {
   font-size: 38px;
   font-family: "Segoe UI", Arial, sans-serif;
-  font-weight: 620;   /* 🔥 semi-bold */
+  font-weight: 620;
   line-height: 1;
   color: #1f4b6e;
 }
+
 .settings {
   display: flex;
-  align-items: center;   /* ✅ makes them perfectly aligned */
+  align-items: center;
   gap: 8px;
 }
 
 .settings__icon {
   font-size: 22px;
-  line-height: 1;        /* ✅ removes extra vertical spacing */
+  line-height: 1;
   display: flex;
   align-items: center;
 }
@@ -478,6 +475,7 @@
   display: flex;
   align-items: center;
 }
+
 .newchat {
   display: flex;
   align-items: center;
@@ -501,4 +499,155 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 1;
+}
+
+/* =========================
+   CLOSED MODE: make footer fit inside 60px sidebar
+========================= */
+
+.sidebar--closed .sidebar-footer {
+  width: 60px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-top: 0 !important;
+  background: transparent !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* settings becomes icon button only */
+.sidebar--closed .settings {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-radius: 14px !important;
+  display: grid !important;
+  place-items: center !important;
+
+  background: transparent !important;
+}
+
+/* hide the "Settings" text when closed */
+.sidebar--closed .settings__text {
+  display: none !important;
+}
+
+/* make icon centered + consistent size */
+.sidebar--closed .settings__icon {
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+/* prevent menu dropdown in closed mode */
+.sidebar--closed .settings-menu {
+  display: none !important;
+}
+
+/* =========================================
+   CLOSED MODE — CLEAN + CORRECT LAYOUT
+========================================= */
+
+.sidebar--closed {
+  width: 60px !important;
+
+  /* 🔥 switch to flex so footer can stick bottom */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Hide large content */
+.sidebar--closed .profile,
+.sidebar--closed .sidebar-body {
+  display: none !important;
+}
+
+/* Remove header padding */
+.sidebar--closed .sidebar-header {
+  padding: 60px 0 0 0 !important;
+  align-items: center !important;
+}
+
+/* ----------------------------------
+   NEW CHAT (center horizontally)
+----------------------------------- */
+.sidebar--closed .newchat {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  margin-top: 60px !important;  /* horizontal center */
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sidebar--closed .newchat__text {
+  display: none !important;
+}
+
+.sidebar--closed .newchat__content {
+  gap: 0 !important;
+}
+
+/* ----------------------------------
+   FOOTER — PUSH TO BOTTOM
+----------------------------------- */
+.sidebar--closed .sidebar-footer {
+  margin-top: auto !important;   /* 🔥 THIS pushes it down */
+  border-top: 0 !important;
+  background: transparent !important;
+  padding: 0 0 14px 0 !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* Settings icon centered */
+.sidebar--closed .settings {
+  width: 44px !important;
+  height: 44px !important;
+
+  margin: 0 auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sidebar--closed .settings__text {
+  display: none !important;
+}
+
+/* Prevent dropdown */
+.sidebar--closed .settings-menu {
+  display: none !important;
+}
+
+.profile-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+  overflow: hidden; /* ✅ prevents big image overflow */
+}
+
+.profile-toggle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;   /* ✅ crop properly */
+  display: block;
 }
