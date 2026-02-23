@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { jsPDF } from 'jspdf';
+import { UiModalService } from '../../../shared/ui-modal/ui-modal.service';
 
 type ChatMessage = {
   role: 'user' | 'ai' | 'assistant' | 'bot';
@@ -50,7 +51,10 @@ export class Topbar implements OnInit, OnDestroy {
 
   menuOpen = false;
 
-  constructor(private el: ElementRef) {}
+  constructor(
+    private el: ElementRef,
+    private uiModal: UiModalService // ✅ ADD
+  ) {}
 
   ngOnInit() {
     this.updateDate();
@@ -78,30 +82,95 @@ export class Topbar implements OnInit, OnDestroy {
     this.menuOpen = false;
   }
 
-  onArchive() {
-    if (!this.currentConversationId) {
-      // optional: show message if no active chat
-      // alert('No active conversation selected.');
+  // =========================
+  // ✅ ARCHIVE with confirm + success
+  // =========================
+  async onArchive() {
+    const id = (this.currentConversationId || '').trim();
+    if (!id) {
       this.closeMenu();
+      await this.uiModal.notify({
+        title: 'No chat selected',
+        message: 'Please open a conversation first.',
+        variant: 'neutral',
+        icon: 'question',
+        autoCloseMs: 2200,
+      });
       return;
     }
-    this.archiveChatId.emit(this.currentConversationId);
+
     this.closeMenu();
+
+    const ok = await this.uiModal.confirm({
+      title: 'Archive chat?',
+      message: 'This chat will be moved to Archived Chats. Continue?',
+      variant: 'neutral',
+      icon: 'question',
+      confirmText: 'Archive',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
+
+    // ✅ Let parent do the API call
+    this.archiveChatId.emit(id);
+
+    // ✅ Success toast/modal (optional)
+    await this.uiModal.notify({
+      title: 'Archived',
+      message: 'Chat moved to Archived Chats.',
+      variant: 'success',
+      icon: 'success',
+      autoCloseMs: 3000,
+    });
   }
 
-  onDelete() {
-    if (!this.currentConversationId) {
-      // optional: alert('No active conversation selected.');
+  // =========================
+  // ✅ DELETE with confirm + success
+  // =========================
+  async onDelete() {
+    const id = (this.currentConversationId || '').trim();
+    if (!id) {
       this.closeMenu();
+      await this.uiModal.notify({
+        title: 'No chat selected',
+        message: 'Please open a conversation first.',
+        variant: 'neutral',
+        icon: 'question',
+        autoCloseMs: 2200,
+      });
       return;
     }
-    this.deleteChatId.emit(this.currentConversationId);
+
     this.closeMenu();
+
+    const ok = await this.uiModal.confirm({
+      title: 'Delete chat?',
+      message: 'This will permanently delete the conversation. Continue?',
+      variant: 'danger',
+      icon: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
+
+    // ✅ Let parent do the API call
+    this.deleteChatId.emit(id);
+
+    // ✅ Success toast/modal (optional)
+    await this.uiModal.notify({
+      title: 'Deleted',
+      message: 'Chat deleted successfully.',
+      variant: 'success',
+      icon: 'success',
+      autoCloseMs: 3000,
+    });
   }
 
   onExport() {
-    // If you want topbar to do the export itself, call this.downloadConversationAsPdf()
-    // But since you're already handling export in parent, we just emit.
     this.exportChat.emit();
     this.closeMenu();
   }
