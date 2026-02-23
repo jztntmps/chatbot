@@ -17,8 +17,6 @@ export class IndexLogin {
   showPassword = false;
   errorMsg = '';
   loading = false;
-  showErrorModal = false;
-  errorModalMessage = '';
 
   // ⚠️ Make sure this matches your backend controller mapping
   private apiUrl = 'http://localhost:8080/api/auth/login';
@@ -35,11 +33,6 @@ export class IndexLogin {
 
   clearError() {
     if (this.errorMsg) this.errorMsg = '';
-  }
-
-  closeErrorModal() {
-    this.showErrorModal = false;
-    this.errorModalMessage = '';
   }
 
   login() {
@@ -75,8 +68,6 @@ export class IndexLogin {
         },
         error: (err) => {
           this.errorMsg = err?.error?.message || 'Invalid email or password';
-          this.errorModalMessage = 'Invalid email or password. Please try again.';
-          this.showErrorModal = true;
           this.loading = false;
         },
       });
