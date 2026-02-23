@@ -9,22 +9,25 @@
   border-right: 1px solid rgba(0, 0, 0, 0.05);
 
   position: relative;
-  z-index: 60;
+  z-index: 9999;
+  isolation: isolate;
 
   display: grid;
   grid-template-rows: auto 1fr auto;
 
   padding: 0;
-  overflow: hidden;
+
+  /* ✅ do NOT clip dropdown */
+  overflow: visible;
+
   transition: transform 0.25s ease;
 }
 
 .sidebar--closed {
   transform: translateX(calc(-100% + 60px));
-  pointer-events: auto; /* ✅ IMPORTANT: remove none */
+  pointer-events: auto;
 }
 
-/* hide everything except burger when closed */
 .sidebar--closed .profile,
 .sidebar--closed .newchat,
 .sidebar--closed .sidebar-body,
@@ -42,6 +45,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  position: relative;
+  z-index: 1; /* ✅ keep below body dropdown */
 }
 
 .sidebar__top {
@@ -58,6 +64,10 @@
   font-size: 22px;
   cursor: pointer;
   opacity: 0.85;
+
+  display: grid;
+  place-items: center;
+  line-height: 1;
 }
 
 .profile {
@@ -89,9 +99,9 @@
 
 .newchat {
   width: 100%;
-  max-width: 210px;
+  max-width: 170px;   /* ⬅ smaller width */
   margin: 0 auto;
-  height: 42px;
+  
 
   border: 0;
   border-radius: 999px;
@@ -102,10 +112,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;           /* slightly tighter spacing */
 
+  font-size: 13px;    /* slightly smaller text */
   cursor: pointer;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.10);
+
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .newchat__plus {
@@ -118,35 +130,47 @@
 }
 
 /* =========================
-   BODY
+   BODY (SCROLL HERE ONLY)
 ========================= */
 
 .sidebar-body {
   min-height: 0;
-  overflow: auto;
-}
 
-.list {
-  padding: 10px 10px 20px; /* 🔥 smaller side padding */
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* tighter spacing */
-
+  /* ✅ scroll only here */
   overflow-y: auto;
+  overflow-x: visible;
+
+  position: relative;
+
+  /* ✅ KEY FIX: put body ABOVE header/footer stacking */
+  z-index: 5;
+
   scrollbar-width: none;
 }
 
-.list::-webkit-scrollbar {
+.sidebar-body::-webkit-scrollbar {
   display: none;
 }
 
+/* ✅ list must allow dropdown to escape */
+.list {
+  padding: 10px 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
 /* =========================
-   CHAT CARD (SMALLER SIDE)
+   CHAT CARD
 ========================= */
 
 .chat-card {
   position: relative;
-  height: 50px; /* 🔥 slightly smaller */
+  height: 50px;
 
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -156,11 +180,14 @@
   grid-template-columns: 1fr auto;
   align-items: center;
 
-  padding: 0 10px; /* 🔥 less side padding */
+  padding: 0 10px;
 
   cursor: pointer;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.18s ease;
+
+  z-index: 0;
+  overflow: visible;
 }
 
 .chat-card:hover {
@@ -170,7 +197,7 @@
 
 .chat-card__title {
   min-width: 0;
-  font-size: 12.5px; /* 🔥 slightly smaller */
+  font-size: 12.5px;
   font-weight: 600;
   color: rgba(0, 0, 0, 0.65);
 
@@ -181,10 +208,11 @@
 
 .chat-card__actions {
   position: relative;
+  z-index: 2;
 }
 
 .chat-card__dots {
-  width: 30px;  /* 🔥 smaller */
+  width: 30px;
   height: 30px;
 
   border: 0;
@@ -203,7 +231,19 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
-/* dropdown */
+/* ✅ BEST: lift the whole card when its dropdown is open (Chrome/Edge/Safari support) */
+.chat-card:has(.chat-card__menu) {
+  z-index: 9998;
+}
+
+/* ✅ fallback: when you clicked the dots (focus inside), lift the card */
+.chat-card:focus-within {
+  z-index: 9998;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
 
 .chat-card__menu {
   position: absolute;
@@ -220,7 +260,8 @@
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(8px);
 
-  z-index: 200;
+  /* ✅ make sure it's above siblings */
+  z-index: 9999;
 }
 
 .chat-card__menu-item {
@@ -254,6 +295,12 @@
   background: rgba(180, 35, 24, 0.10);
 }
 
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 /* =========================
    SEE ALL
 ========================= */
@@ -277,9 +324,13 @@
 
 .sidebar-footer {
   border-top: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 14px 18px 22px;
+
+  padding: 8px 8px 2px;  /* ⬅ dagdag bottom padding */
+
   position: relative;
   background: #f6f6f8;
+
+  z-index: 1;
 }
 
 .settings {
@@ -313,7 +364,7 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
   backdrop-filter: blur(10px);
 
-  z-index: 120;
+  z-index: 20000;
 }
 
 .settings-menu__item {
@@ -335,10 +386,6 @@
 
 .settings-menu__item:hover {
   background: rgba(0, 0, 0, 0.06);
-}
-
-.settings-menu__item--danger {
-  color: #b42318;
 }
 
 .settings-menu__item--logout {
@@ -365,21 +412,93 @@
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   }
 }
+/* =========================
+   FIX: SETTINGS MENU CLICK (Archive not clickable)
+========================= */
 
-.menu-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+/* When settings menu is open, lift the footer above the body */
+.sidebar-footer:has(.settings-menu) {
+  z-index: 20; /* higher than .sidebar-body (z-index: 5) */
 }
 
-.burger {
+/* Optional but recommended:
+   Disable clicks on the body while settings is open
+   so walang humaharang sa menu clicks */
+.sidebar:has(.settings-menu) .sidebar-body {
+  pointer-events: none;
+}
+
+/* Ensure menu itself remains clickable */
+.sidebar:has(.settings-menu) .settings-menu,
+.sidebar:has(.settings-menu) .settings-menu * {
+  pointer-events: auto;
+}
+
+/* ✅ Bigger avatar circle */
+.avatar {
+  width: 64px;   /* from 44px */
+  height: 64px;  /* from 44px */
+  border-radius: 50%;
+  overflow: hidden;
   display: grid;
   place-items: center;
-  line-height: 1;
+
+  background: linear-gradient(135deg, #e1dbdb, #fffefe);
 }
 
-.burger__close {
-  font-size: 26px; /* adjust */
-  font-weight: 400;
+/* ✅ Make sure image also fits bigger */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ✅ Bigger letter inside */
+.avatar__fallback {
+  font-size: 38px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 620;   /* 🔥 semi-bold */
+  line-height: 1;
+  color: #1f4b6e;
+}
+.settings {
+  display: flex;
+  align-items: center;   /* ✅ makes them perfectly aligned */
+  gap: 8px;
+}
+
+.settings__icon {
+  font-size: 22px;
+  line-height: 1;        /* ✅ removes extra vertical spacing */
+  display: flex;
+  align-items: center;
+}
+
+.settings__text {
+  display: flex;
+  align-items: center;
+}
+.newchat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+}
+
+.newchat__content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.newchat__icon {
+  display: flex;
+}
+
+.newchat__text {
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1;
 }

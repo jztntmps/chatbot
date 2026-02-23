@@ -1,8 +1,10 @@
-/* container */
+/* =========================
+   TOPBAR (ULTRA SLIM + CLEAN)
+========================= */
+
 .topbar {
-  margin-top: -30px;
-  height: 72px;
-  padding: 6px 28px 0;
+  height: 48px;
+  padding: 0 20px;
 
   display: flex;
   align-items: center;
@@ -15,158 +17,148 @@
   z-index: 50;
 }
 
-/* when NOT logged in: push buttons to the top-right */
+/* End-to-end thin line */
+.topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* =========================
+   NOT LOGGED IN BUTTONS
+========================= */
+
 .topbar__rightOnly {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-/* shared button base */
 .topbar__btn {
-  border: 0;
+  border: none;
   cursor: pointer;
 
-  padding: 12px 34px;
+  padding: 8px 22px;
   border-radius: 999px;
 
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.2px;
 
-  box-shadow:
-    0 10px 20px rgba(0, 0, 0, 0.10),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-
-  transition: transform 0.15s ease, filter 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .topbar__btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.03);
+  opacity: 0.85;
 }
 
-.topbar__btn:active {
-  transform: translateY(0);
-}
-
-/* Login (blue pill) */
 .topbar__btn--dark {
-  color: #ffffff;
-  background: linear-gradient(180deg, #8fbbe3 0%, #6fa8dc 100%);
+  color: #fff;
+  background: #6fa8dc;
 }
 
-/* Sign Up (gray pill) */
 .topbar__btn--light {
   color: #222;
-  background: linear-gradient(180deg, #eeeeee 0%, #d9d9d9 100%);
+  background: #e5e5e5;
 }
 
-/* ===== Logged-in layout styles ===== */
+/* =========================
+   LOGGED IN LAYOUT
+========================= */
+
 .topbar__left {
   display: flex;
   align-items: center;
-  gap: 14px;
 }
 
-.new-chat {
-  border: 0;
-  cursor: pointer;
-  border-radius: 999px;
-  padding: 10px 18px;
-
-  font-weight: 600;
-  font-size: 14px;
-
-  color: #ffffff;
-  background: linear-gradient(180deg, #8fbbe3 0%, #6fa8dc 100%);
-
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.10);
+.topbar__logo {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
 }
 
-.plus {
-  margin-right: 8px;
-  font-weight: 800;
-}
-
-/* date */
-.topbar__center {
-  font-size: 16px;
-  font-weight: 500;
-  color: #2b2b2b;
-
-  margin-top: 30px;
-  transform: translateX(0px);
-}
-
-/* right side (IMPORTANT: relative for dropdown anchor) */
+/* Right side */
 .topbar__right {
-  position: relative;
+  position: relative;   /* required for dropdown anchor */
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
+  margin-left: auto;
 }
 
-/* ===== 3 DOTS BUTTON ===== */
-.dots {
-  border: none;          /* remove border */
-  outline: none;         /* remove focus outline */
-  box-shadow: none;      /* remove any shadow border */
+.topbar__date {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #555;
+}
 
-  background: #f3f3f3;
-  padding: 10px 12px;
+/* =========================
+   3 DOTS (CLEAN SVG)
+========================= */
+
+.dots {
+  border: none;
+  background: transparent;
   cursor: pointer;
 
+  width: 28px;
+  height: 28px;
+
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
 
-  margin-top: 30px;
-}
-
-.dots:focus {
-  outline: none;         /* remove blue focus ring */
+  border-radius: 6px;
+  transition: background 0.15s ease;
 }
 
 .dots:hover {
-  filter: brightness(0.98);
+  background: #f3f4f6;
 }
 
-.dots span {
-  width: 6px;
-  height: 6px;
-  background: #333;
-  border-radius: 50%;
+.dots:active {
+  transform: scale(0.95);
 }
-/* ===== CARD STYLE DROPDOWN ===== */
+
+.dots__icon {
+  color: #444;
+}
+
+/* =========================
+   DROPDOWN MENU
+========================= */
+
 .dropdown {
   position: absolute;
-  top: 82px; /* 30px dots margin + button height spacing */
+  top: calc(100% + 6px);
   right: 0;
 
-  width: 100px;
-  padding: 18px 16px;
+  width: 170px;
+  padding: 6px;
 
-  background: #efefef;
-  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
 
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 4px;
 
-  animation: fadeSlide 0.18s ease;
-  z-index: 999;
+  z-index: 9999;
+
+  animation: fadeIn 0.15s ease;
 }
 
-@keyframes fadeSlide {
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -174,61 +166,50 @@
   }
 }
 
-/* items */
-.dropdown__item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Dropdown Items */
 
-  border: 0;
+.dropdown__item {
+  width: 100%;
+  border: none;
   background: transparent;
   cursor: pointer;
 
-  font-size: 16px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 9px 10px;
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
   color: #222;
 
-  padding: 6px 4px;
+  text-align: left;
+  transition: background 0.15s ease;
 }
 
 .dropdown__item:hover {
-  opacity: 0.75;
+  background: #f3f4f6;
 }
 
-/* icons */
+.dropdown__item:active {
+  background: #eef2f7;
+}
+
+/* Icons */
+
 .dropdown__icon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
 }
 
-/* left side */
-.topbar__left {
-  display: flex;
-  align-items: center;
+/* Delete style */
+.dropdown__item:last-child {
+  color: #b42318;
 }
 
-/* logo */
-.topbar__logo {
-  height: 42px;   /* adjust size if needed */
-  width: auto;
-  object-fit: contain;
-  margin-top: 30px;
-  margin-left: 10px;
-}
-
-/* right side */
-.topbar__right {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-left: auto; /* pushes right side fully right */
-}
-
-/* date styling */
-.topbar__date {
-  font-size: 15px;
-  font-weight: 500;
-  color: #2b2b2b;
-  margin-top: 30px;
+.dropdown__item:last-child:hover {
+  background: rgba(180, 35, 24, 0.08);
 }

@@ -20,19 +20,22 @@
       (deleteChatId)="onDeleteChat($event)"
       (archiveChatId)="onArchiveChat($event)"
       (exportChatId)="onExportChat($event)"
+      (refreshChats)="reloadConversations()"
+      
     ></app-sidebar>
   </div>
 
   <!-- RIGHT CONTENT -->
   <main class="chatbox">
     <div class="topbar-shell">
-      <app-topbar
-        [isLoggedIn]="isLoggedIn"
-        (login)="goLogin()"
-        (signup)="goSignup()"
-        [messages]="messages"
-        (exportChat)="exportConversationPdf()"
-      ></app-topbar>
+<app-topbar
+  [isLoggedIn]="isLoggedIn"
+  [messages]="messages"
+  [currentConversationId]="activeConversationId"
+  (archiveChatId)="onArchiveChat($event)"
+  (deleteChatId)="onDeleteChat($event)"
+  (exportChat)="exportConversationPdf()"
+></app-topbar>
     </div>
 
     <section class="chat">

@@ -1,27 +1,155 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { timeout } from 'rxjs/operators';
+
 import { FooterComponent } from '../footer/footer';
 import { SidebarComponent } from '../sidebar/sidebar';
 import { Topbar } from '../topbar/topbar';
-import { Router } from '@angular/router';
+
+import { ConversationService, Conversation } from '../../../services/conversation';
+
+type ChatMsg = { role: 'user' | 'ai'; text: string };
+type ChatPreview = { id: string; title: string };
 
 @Component({
   selector: 'app-preview-archive',
   standalone: true,
-  imports: [CommonModule, FooterComponent, SidebarComponent, Topbar],
+  imports: [CommonModule, FormsModule, FooterComponent, SidebarComponent, Topbar],
   templateUrl: './preview-archive.html',
-  styleUrl: './preview-archive.scss',
+  styleUrls: ['./preview-archive.scss'],
 })
-export class PreviewArchive {
-  isLoggedIn = true;
+export class PreviewArchive implements OnInit {
+  isLoggedIn = false;
   sidebarOpen = true;
-  userEmail = 'User';
-  chats: { id: string; title: string }[] = [];
 
-  constructor(private router: Router) {}
+  userEmail = 'User';
+  userId = '';
+
+  chats: ChatPreview[] = [];
+
+  conversationId: string | null = null;
+  messages: ChatMsg[] = [];
+  loading = false;
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private convoApi: ConversationService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  async ngOnInit() {
+    // optional: keep your auth consistent
+    const saved = localStorage.getItem('isLoggedIn');
+    this.isLoggedIn = saved === 'true' || saved === '1';
+    this.userEmail = localStorage.getItem('userEmail') || 'User';
+    this.userId = localStorage.getItem('userId') || '';
+
+    // read query param
+    this.conversationId = this.route.snapshot.queryParamMap.get('id');
+
+    // load sidebar list (optional)
+    if (this.isLoggedIn && this.userId) {
+      await this.loadConversations();
+    }
+
+    // load the archived convo
+    if (this.conversationId) {
+      await this.loadConversation(this.conversationId);
+    }
+  }
+
+  private normalizeId(id: string | null): string | null {
+    if (!id) return null;
+    const v = id.trim();
+    if (!v || v === 'null' || v === 'undefined') return null;
+    return v;
+  }
+
+  private extractConversationId(obj: any): string | null {
+    return (
+      obj?.id ||
+      obj?._id ||
+      obj?.conversationId ||
+      obj?.conversationID ||
+      obj?.conversation_id ||
+      null
+    );
+  }
+
+  async loadConversations() {
+    try {
+      const list = await firstValueFrom(
+        this.convoApi.getByUser(this.userId).pipe(timeout(120000))
+      );
+
+      // show only non-archived on sidebar (same behavior as chatbox)
+      this.chats = (list || [])
+        .filter((c: any) => !c.archived)
+        .map((c: any) => ({
+          id: this.extractConversationId(c) || '',
+          title: c.title || '(Untitled)',
+        }))
+        .filter((x) => !!x.id);
+
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Failed to load conversations', e);
+      this.chats = [];
+      this.cdr.detectChanges();
+    }
+  }
+
+  async loadConversation(id: string) {
+    const normalized = this.normalizeId(id);
+    if (!normalized) return;
+
+    this.loading = true;
+    this.cdr.detectChanges();
+
+    try {
+      // ✅ use getConversation() from your service
+      const convo: Conversation = await firstValueFrom(
+        this.convoApi.getConversation(normalized).pipe(timeout(120000))
+      );
+
+      const turns = convo?.turns || [];
+      const rebuilt: ChatMsg[] = [];
+
+      for (const t of turns) {
+        if (t?.userMessage) rebuilt.push({ role: 'user', text: t.userMessage });
+        if (t?.botResponse) rebuilt.push({ role: 'ai', text: t.botResponse });
+      }
+
+      this.messages = rebuilt;
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('Failed to load archived conversation', e);
+      this.messages = [{ role: 'ai', text: '⚠️ Failed to load archived chat.' }];
+      this.cdr.detectChanges();
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ✅ READ ONLY: if user clicks a chat from sidebar, open it normally
+  openChat(id: string) {
+    this.router.navigate(['/chatbox'], { queryParams: { id } });
+  }
+
+  startNewChat() {
+    this.router.navigate(['/chatbox']);
+  }
+
+  seeAll() {}
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+    this.cdr.detectChanges();
   }
 
   goLogin() {
@@ -33,24 +161,36 @@ export class PreviewArchive {
   }
 
   goArchive() {
-    // already here; no-op
+    // already in archive preview; no-op
   }
 
   logout() {
-    this.isLoggedIn = false;
-    this.sidebarOpen = false;
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('activeConversationId');
     this.router.navigate(['/']);
   }
 
-  startNewChat() {
-    // stub for integration
-  }
+  // ✅ Unarchive then go back to chatbox and reopen it for messaging
+  async unarchiveConversation() {
+    if (!this.conversationId) return;
 
-  openChat(_id: string) {
-    // stub for integration
-  }
+    try {
+      await firstValueFrom(
+        this.convoApi
+          .unarchiveConversation(this.conversationId)
+          .pipe(timeout(120000))
+      );
 
-  seeAll() {
-    // stub for integration
+      // save active convo so chatbox opens it even without query params (optional)
+      localStorage.setItem('activeConversationId', this.conversationId);
+
+      // go back to chatbox and open it
+      this.router.navigate(['/chatbox'], { queryParams: { id: this.conversationId } });
+    } catch (e) {
+      console.error('Unarchive failed', e);
+      alert('Failed to unarchive conversation.');
+    }
   }
 }

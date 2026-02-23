@@ -29,21 +29,21 @@ type ChatMessage = {
 export class Topbar implements OnInit, OnDestroy {
   @Input() isLoggedIn = false;
 
-  /**
-   * ✅ Pass your chat messages here from parent (chat page).
-   * This component will export them to PDF.
-   */
+  /** ✅ chat messages for export */
   @Input() messages: ChatMessage[] = [];
+
+  /** ✅ current opened conversation id (needed for archive/delete) */
+  @Input() currentConversationId: string | null = null;
 
   @Output() login = new EventEmitter<void>();
   @Output() signup = new EventEmitter<void>();
   @Output() newChat = new EventEmitter<void>();
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  // dropdown actions
-  @Output() archive = new EventEmitter<void>();
-  @Output() deleteChat = new EventEmitter<void>();
-  @Output() exportChat = new EventEmitter<void>();  
+  /** ✅ Topbar dropdown actions (emit with conversation id) */
+  @Output() archiveChatId = new EventEmitter<string>();
+  @Output() deleteChatId = new EventEmitter<string>();
+  @Output() exportChat = new EventEmitter<void>();
 
   today = '';
   private timer?: number;
@@ -62,11 +62,13 @@ export class Topbar implements OnInit, OnDestroy {
   }
 
   onToggleSidebar() {
-    console.log('[topbar] menu clicked');
     this.toggleSidebar.emit();
   }
 
-  // dots menu
+  /* =========================
+     DOTS MENU
+  ========================= */
+
   toggleMenu(ev: MouseEvent) {
     ev.stopPropagation();
     this.menuOpen = !this.menuOpen;
@@ -77,22 +79,37 @@ export class Topbar implements OnInit, OnDestroy {
   }
 
   onArchive() {
-    this.archive.emit();
-    this.closeMenu();
-  }
-
-  // ✅ EXPORT AS PDF
-  onExport() {
-    this.exportChat.emit();
+    if (!this.currentConversationId) {
+      // optional: show message if no active chat
+      // alert('No active conversation selected.');
+      this.closeMenu();
+      return;
+    }
+    this.archiveChatId.emit(this.currentConversationId);
     this.closeMenu();
   }
 
   onDelete() {
-    this.deleteChat.emit();
+    if (!this.currentConversationId) {
+      // optional: alert('No active conversation selected.');
+      this.closeMenu();
+      return;
+    }
+    this.deleteChatId.emit(this.currentConversationId);
     this.closeMenu();
   }
 
-  // close when clicking outside
+  onExport() {
+    // If you want topbar to do the export itself, call this.downloadConversationAsPdf()
+    // But since you're already handling export in parent, we just emit.
+    this.exportChat.emit();
+    this.closeMenu();
+  }
+
+  /* =========================
+     CLOSE MENU ON OUTSIDE CLICK / ESC
+  ========================= */
+
   @HostListener('document:click', ['$event'])
   onDocClick(event: MouseEvent) {
     if (!this.menuOpen) return;
@@ -100,11 +117,14 @@ export class Topbar implements OnInit, OnDestroy {
     if (!clickedInside) this.closeMenu();
   }
 
-  // close on ESC
   @HostListener('document:keydown.escape')
   onEsc() {
     this.closeMenu();
   }
+
+  /* =========================
+     DATE
+  ========================= */
 
   private updateDate() {
     this.today = new Date().toLocaleDateString('en-US', {
@@ -113,6 +133,10 @@ export class Topbar implements OnInit, OnDestroy {
       year: 'numeric',
     });
   }
+
+  /* =========================
+     OPTIONAL PDF EXPORT (unused if parent handles export)
+  ========================= */
 
   private downloadConversationAsPdf() {
     if (!this.messages || this.messages.length === 0) {
@@ -144,18 +168,16 @@ export class Topbar implements OnInit, OnDestroy {
     y += 18;
 
     for (const m of this.messages) {
-      const role = (m.role === 'user') ? 'You' : 'Assistant';
+      const role = m.role === 'user' ? 'You' : 'Assistant';
       const content = (m.content ?? m.message ?? m.text ?? '').toString().trim();
 
       if (!content) continue;
 
-      // role label
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text(`${role}:`, margin, y);
       y += 14;
 
-      // content
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
 
