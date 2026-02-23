@@ -1,0 +1,58 @@
+<ng-container *ngIf="(modal.modal$ | async) as m">
+  <div class="m" *ngIf="m.open">
+    <div class="m__backdrop" (click)="modal._resolve(false)"></div>
+
+    <div class="m__card" role="dialog" aria-modal="true">
+      <button class="m__close" type="button" (click)="modal._resolve(false)">×</button>
+
+      <div
+        class="m__icon"
+        [class.m__icon--danger]="m.variant === 'danger'"
+        [class.m__icon--success]="m.variant === 'success'"
+      >
+        <!-- Warning / Question / Success icons (SVG) -->
+        <svg *ngIf="m.icon === 'warning'" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3l10 18H2L12 3z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 9v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="17" r="1.2" fill="currentColor"/>
+        </svg>
+
+        <svg *ngIf="m.icon === 'question'" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M9.6 9.2a2.6 2.6 0 015 1c0 1.9-2 2-2 3.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="17" r="1.2" fill="currentColor"/>
+        </svg>
+
+        <svg *ngIf="m.icon === 'success'" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 12.5l2.6 2.6L16.5 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <h3 class="m__title">{{ m.title }}</h3>
+      <p class="m__msg">{{ m.message }}</p>
+
+      <div class="m__actions">
+        <button
+          *ngIf="m.showCancel !== false"
+          class="btn btn--cancel"
+          type="button"
+          (click)="modal._resolve(false)"
+        >
+          {{ m.cancelText || 'Cancel' }}
+        </button>
+
+        <button
+          class="btn"
+          [class.btn--danger]="m.variant === 'danger'"
+          [class.btn--success]="m.variant === 'success'"
+          [class.btn--neutral]="m.variant === 'neutral'"
+          type="button"
+          (click)="modal._resolve(true)"
+        >
+          {{ m.confirmText || 'OK' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

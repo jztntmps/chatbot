@@ -9,7 +9,7 @@ import { FooterComponent } from '../footer/footer';
 import { SidebarComponent } from '../sidebar/sidebar';
 
 import { ConversationService } from '../../../services/conversation';
-
+import { UiModalService } from '../../../shared/ui-modal/ui-modal.service';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { filter, timeout } from 'rxjs/operators';
 import { jsPDF } from 'jspdf';
@@ -80,7 +80,8 @@ export class Chatbox implements OnInit, OnDestroy {
     private http: HttpClient,
     private convoApi: ConversationService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private uiModal: UiModalService
   ) {}
 
   ngOnInit(): void {
@@ -593,36 +594,48 @@ export class Chatbox implements OnInit, OnDestroy {
     );
   }
 
-  async onDeleteChat(conversationId: string) {
-    const id = this.normalizeId(conversationId);
-    if (!id) return;
+ async onDeleteChat(conversationId: string) {
+  const id = this.normalizeId(conversationId);
+  if (!id) return;
 
-    const ok = confirm('Delete this chat?');
-    if (!ok) {
-      this.cdr.detectChanges();
-      return;
+  // ✅ NO confirm here (Sidebar already confirms)
+  try {
+    await firstValueFrom(this.convoApi.deleteConversation(id).pipe(timeout(120000)));
+
+    this.chats = this.chats.filter((c) => c.id !== id);
+
+    if (this.activeConversationId === id) {
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+      this.messages = [];
+      this.message = '';
+      this.sending = false;
     }
 
-    try {
-      await firstValueFrom(this.convoApi.deleteConversation(id).pipe(timeout(120000)));
+    this.cdr.detectChanges();
 
-      this.chats = this.chats.filter((c) => c.id !== id);
+    // ✅ success modal (auto close 3s)
+    await this.uiModal.notify({
+      title: 'Deleted',
+      message: 'Chat deleted successfully.',
+      variant: 'success',
+      icon: 'success',
+      autoCloseMs: 3000,
+    });
+  } catch (e) {
+    console.error('Delete failed', e);
+    this.cdr.detectChanges();
 
-      if (this.activeConversationId === id) {
-        this.activeConversationId = null;
-        localStorage.removeItem('activeConversationId');
-        this.messages = [];
-        this.message = '';
-        this.sending = false;
-      }
-
-      this.cdr.detectChanges();
-    } catch (e) {
-      console.error('Delete failed', e);
-      alert('Failed to delete conversation in database.');
-      this.cdr.detectChanges();
-    }
+    // ✅ error modal
+    await this.uiModal.notify({
+      title: 'Delete failed',
+      message: 'Failed to delete conversation in database.',
+      variant: 'danger',
+      icon: 'warning',
+      autoCloseMs: 3000,
+    });
   }
+}
 
   // ===============================
   // ✅ PDF export (UNCHANGED BELOW)
@@ -818,29 +831,44 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   async onArchiveChat(conversationId: string) {
-    const id = this.normalizeId(conversationId);
-    if (!id) return;
+  const id = this.normalizeId(conversationId);
+  if (!id) return;
 
-    try {
-      await firstValueFrom(this.convoApi.archiveConversation(id).pipe(timeout(120000)));
+  try {
+    await firstValueFrom(this.convoApi.archiveConversation(id).pipe(timeout(120000)));
 
-      this.chats = this.chats.filter((c) => c.id !== id);
+    this.chats = this.chats.filter((c) => c.id !== id);
 
-      if (this.activeConversationId === id) {
-        this.activeConversationId = null;
-        localStorage.removeItem('activeConversationId');
-        this.messages = [];
-        this.message = '';
-        this.sending = false;
-      }
-
-      this.cdr.detectChanges();
-    } catch (e) {
-      console.error('Archive failed', e);
-      alert('Failed to archive conversation.');
-      this.cdr.detectChanges();
+    if (this.activeConversationId === id) {
+      this.activeConversationId = null;
+      localStorage.removeItem('activeConversationId');
+      this.messages = [];
+      this.message = '';
+      this.sending = false;
     }
+
+    this.cdr.detectChanges();
+
+    await this.uiModal.notify({
+      title: 'Archived',
+      message: 'Chat moved to Archived Chats.',
+      variant: 'success',
+      icon: 'success',
+      autoCloseMs: 3000,
+    });
+  } catch (e) {
+    console.error('Archive failed', e);
+    this.cdr.detectChanges();
+
+    await this.uiModal.notify({
+      title: 'Archive failed',
+      message: 'Failed to archive conversation.',
+      variant: 'danger',
+      icon: 'warning',
+      autoCloseMs: 3000,
+    });
   }
+}
 
   openArchiveModal() {
     this.showArchiveModal = true;

@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 
 import { ConversationService, Conversation } from '../../../services/conversation';
+import { UiModalService } from '../../../shared/ui-modal/ui-modal.service';
 
 type ArchiveRow = {
   id: string;
@@ -29,13 +30,9 @@ type ArchiveRow = {
   styleUrls: ['./modal.scss'],
 })
 export class Modal implements OnInit {
-  // ✅ close modal
   @Output() close = new EventEmitter<void>();
-
-  // ✅ notify parent to refresh sidebar list (after unarchive/delete)
   @Output() changed = new EventEmitter<void>();
 
-  // ✅ passed from parent
   @Input() userId = '';
 
   rows: ArchiveRow[] = [];
@@ -44,7 +41,8 @@ export class Modal implements OnInit {
   constructor(
     private router: Router,
     private convoApi: ConversationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private uiModal: UiModalService // ✅ ADD
   ) {}
 
   async ngOnInit() {
@@ -74,7 +72,6 @@ export class Modal implements OnInit {
 
   async loadArchived() {
     if (!this.userId) {
-      console.log('NO USER ID (Modal)');
       this.rows = [];
       return;
     }
@@ -100,6 +97,13 @@ export class Modal implements OnInit {
     } catch (e) {
       console.error('Failed loading archived', e);
       this.rows = [];
+      await this.uiModal.notify({
+        title: 'Load failed',
+        message: 'Failed to load archived chats.',
+        variant: 'danger',
+        icon: 'warning',
+        autoCloseMs: 3000,
+      });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -118,32 +122,64 @@ export class Modal implements OnInit {
     this.router.navigate(['/preview-archive'], { queryParams: { id: row.id } });
   }
 
-  // ✅ single unarchive: archived=false only (NOT delete)
+  // ✅ single unarchive
   async unarchiveOne(row: ArchiveRow, ev?: MouseEvent) {
     ev?.stopPropagation();
+
+    const ok = await this.uiModal.confirm({
+      title: 'Restore chat?',
+      message: `Unarchive "${row.title}"?`,
+      variant: 'neutral',
+      icon: 'question',
+      confirmText: 'Restore',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
 
     try {
       await firstValueFrom(
         this.convoApi.unarchiveConversation(row.id).pipe(timeout(120000))
       );
 
-      // remove from archive modal list
       this.rows = this.rows.filter((r) => r.id !== row.id);
-
-      // tell parent to refresh sidebar list
       this.notifyChanged();
-
       this.cdr.detectChanges();
+
+      await this.uiModal.notify({
+        title: 'Restored',
+        message: 'Chat has been restored successfully.',
+        variant: 'success',
+        icon: 'success',
+        autoCloseMs: 3000,
+      });
     } catch (e) {
       console.error('Unarchive failed', e);
-      alert('Failed to unarchive conversation.');
+      await this.uiModal.notify({
+        title: 'Restore failed',
+        message: 'Failed to restore chat.',
+        variant: 'danger',
+        icon: 'warning',
+        autoCloseMs: 3000,
+      });
     }
   }
 
-  // ✅ single delete: totally delete in DB
+  // ✅ single delete
   async deleteOne(row: ArchiveRow, ev?: MouseEvent) {
     ev?.stopPropagation();
-    const ok = confirm('Delete this archived chat?');
+
+    const ok = await this.uiModal.confirm({
+      title: 'Delete archived chat?',
+      message: `This will permanently delete "${row.title}". Continue?`,
+      variant: 'danger',
+      icon: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
     if (!ok) return;
 
     try {
@@ -152,21 +188,46 @@ export class Modal implements OnInit {
       );
 
       this.rows = this.rows.filter((r) => r.id !== row.id);
-
-      // tell parent to refresh sidebar list
       this.notifyChanged();
-
       this.cdr.detectChanges();
+
+      await this.uiModal.notify({
+        title: 'Deleted',
+        message: 'Archived chat deleted successfully.',
+        variant: 'success',
+        icon: 'success',
+        autoCloseMs: 3000,
+      });
     } catch (e) {
       console.error('Delete failed', e);
-      alert('Failed to delete conversation in database.');
+      await this.uiModal.notify({
+        title: 'Delete failed',
+        message: 'Failed to delete archived chat.',
+        variant: 'danger',
+        icon: 'warning',
+        autoCloseMs: 3000,
+      });
     }
   }
 
-  // ✅ bulk unarchive: archived=false only (NOT delete)
+  // ✅ bulk unarchive
   async unarchiveSelected() {
     const selected = this.rows.filter((r) => r.checked);
     if (selected.length === 0) return;
+
+    const count = selected.length;
+
+    const ok = await this.uiModal.confirm({
+      title: 'Restore selected chats?',
+      message: `Restore ${count} archived chat${count > 1 ? 's' : ''}?`,
+      variant: 'neutral',
+      icon: 'question',
+      confirmText: 'Restore',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
 
     try {
       for (const r of selected) {
@@ -176,23 +237,45 @@ export class Modal implements OnInit {
       }
 
       this.rows = this.rows.filter((r) => !r.checked);
-
-      // tell parent to refresh sidebar list
       this.notifyChanged();
-
       this.cdr.detectChanges();
+
+      await this.uiModal.notify({
+        title: 'Restored',
+        message: `${count} chat${count > 1 ? 's' : ''} restored successfully.`,
+        variant: 'success',
+        icon: 'success',
+        autoCloseMs: 3000,
+      });
     } catch (e) {
       console.error('Bulk unarchive failed', e);
-      alert('Failed to unarchive selected chats.');
+      await this.uiModal.notify({
+        title: 'Restore failed',
+        message: 'Failed to restore selected chats.',
+        variant: 'danger',
+        icon: 'warning',
+        autoCloseMs: 3000,
+      });
     }
   }
 
-  // ✅ bulk delete: totally delete in DB
+  // ✅ bulk delete
   async deleteSelected() {
     const selected = this.rows.filter((r) => r.checked);
     if (selected.length === 0) return;
 
-    const ok = confirm(`Delete ${selected.length} archived chat(s)?`);
+    const count = selected.length;
+
+    const ok = await this.uiModal.confirm({
+      title: 'Delete selected chats?',
+      message: `This will permanently delete ${count} archived chat${count > 1 ? 's' : ''}. Continue?`,
+      variant: 'danger',
+      icon: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
     if (!ok) return;
 
     try {
@@ -203,14 +286,25 @@ export class Modal implements OnInit {
       }
 
       this.rows = this.rows.filter((r) => !r.checked);
-
-      // tell parent to refresh sidebar list
       this.notifyChanged();
-
       this.cdr.detectChanges();
+
+      await this.uiModal.notify({
+        title: 'Deleted',
+        message: `${count} archived chat${count > 1 ? 's' : ''} deleted successfully.`,
+        variant: 'success',
+        icon: 'success',
+        autoCloseMs: 3000,
+      });
     } catch (e) {
       console.error('Bulk delete failed', e);
-      alert('Failed to delete selected chats.');
+      await this.uiModal.notify({
+        title: 'Delete failed',
+        message: 'Failed to delete selected chats.',
+        variant: 'danger',
+        icon: 'warning',
+        autoCloseMs: 3000,
+      });
     }
   }
 }

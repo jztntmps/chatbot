@@ -1,31 +1,30 @@
+// sidebar.ts
 import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import { Modal } from '../modal/modal';
 
-type ChatPreview = {
-  id: string;
-  title: string;
-};
+// ✅ service-driven modal
+import { UiModalService } from '../../../shared/ui-modal/ui-modal.service';
+
+type ChatPreview = { id: string; title: string };
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, Modal],
+  imports: [CommonModule, Modal], // ✅ UiModalComponent NOT needed here
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
 })
 export class SidebarComponent {
+  constructor(private uiModal: UiModalService) {}
+
   @Input() isOpen = true;
   @Input() username = 'User';
   @Input() avatarUrl = '';
   @Input() userId: string = '';
+  @Input() chats: ChatPreview[] = [];
 
-  @Input() chats: ChatPreview[] = [
-    { id: '1', title: '...' },
-    { id: '2', title: '...' },
-    { id: '3', title: '...' },
-  ];
-  @Output() openArchive = new EventEmitter<void>();
   @Output() toggle = new EventEmitter<void>();
   @Output() newChat = new EventEmitter<void>();
   @Output() openChat = new EventEmitter<string>();
@@ -46,11 +45,8 @@ export class SidebarComponent {
   openMenuId: string | null = null;
 
   get profileInitial(): string {
-  if (!this.username) return 'U';
-  return this.username.charAt(0).toUpperCase();
-}
-
-
+    return this.username ? this.username.charAt(0).toUpperCase() : 'U';
+  }
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
@@ -69,21 +65,35 @@ export class SidebarComponent {
   }
 
   exportChat(id: string) {
-  this.settingsOpen = false;
-  this.openMenuId = null;
-  this.exportChatId.emit(id);
-}
+    this.settingsOpen = false;
+    this.openMenuId = null;
+    this.exportChatId.emit(id);
+  }
 
   clickArchive() {
+    // opens archived modal list
     this.settingsOpen = false;
     this.openMenuId = null;
     this.showModal = true;
     this.archive.emit();
   }
 
-  clickLogout() {
+  async clickLogout() {
     this.settingsOpen = false;
     this.openMenuId = null;
+
+    const ok = await this.uiModal.confirm({
+      title: 'Logout?',
+      message: 'You will be signed out of your account. Continue?',
+      variant: 'neutral',
+      icon: 'question',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
+
     this.logout.emit();
   }
 
@@ -103,14 +113,39 @@ export class SidebarComponent {
     this.openMenuId = this.openMenuId === chatId ? null : chatId;
   }
 
-  archiveChat(chatId: string) {
+  // ==========================================
+  // ✅ Archive/Delete confirmations using UiModalService
+  // ==========================================
+  async archiveChat(chatId: string) {
+    const ok = await this.uiModal.confirm({
+      title: 'Archive chat?',
+      message: 'This chat will be moved to Archived Chats. Continue?',
+      variant: 'neutral',
+      icon: 'question',
+      confirmText: 'Archive',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
+
+    if (!ok) return;
+
     this.openMenuId = null;
     this.archiveChatId.emit(chatId);
   }
- 
 
+  async deleteChat(chatId: string) {
+    const ok = await this.uiModal.confirm({
+      title: 'Delete chat?',
+      message: 'This will permanently delete the conversation. Continue?',
+      variant: 'danger',
+      icon: 'warning',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      showCancel: true,
+    });
 
-  deleteChat(chatId: string) {
+    if (!ok) return;
+
     this.openMenuId = null;
     this.deleteChatId.emit(chatId);
   }
@@ -120,11 +155,9 @@ export class SidebarComponent {
     this.openMenuId = null;
     this.settingsOpen = false;
   }
-  onArchiveChanged() {
-  // close modal if you want
-  this.showModal = false;
 
-  // tell Chatbox to reload conversations from DB
-  this.refreshChats.emit();
-}
+  onArchiveChanged() {
+    this.showModal = false;
+    this.refreshChats.emit();
+  }
 }
