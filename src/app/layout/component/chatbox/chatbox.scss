@@ -94,18 +94,18 @@ app-topbar {
 
 .chat {
   flex: 1 1 auto;
-  min-height: 0; /* ✅ critical for scroll */
+  min-height: 0;
   overflow: hidden;
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 
-  /* ✅ moved spacing INSIDE chat, not on chatbox edge */
+  /* ✅ remove center so bottom can work */
+  justify-content: flex-start;
+
   padding: 22px 24px 18px;
-
-  gap: 28px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -143,7 +143,7 @@ app-topbar {
   background: transparent;
   border: 0;
   box-shadow: none;
-  padding: 0 0 8px;
+  padding: 0 0 14px;
 
   display: flex;
   flex-direction: column;
@@ -228,15 +228,18 @@ app-topbar {
   align-items: center;
   gap: 14px;
 
+  /* ✅ push it to bottom */
+  margin-top: auto;
+  /* ✅ always visible at bottom */
   position: sticky;
   bottom: 0;
 
-  padding: 10px 0 6px;
+  padding: 12px 0 6px;
   background: transparent;
 }
 
 .prompt__input {
-  height: 60px;
+  height: 40px;
   border-radius: 18px;
   border: none;
   background: rgba(230, 231, 235, 0.9);
@@ -253,6 +256,7 @@ app-topbar {
 
 .prompt__input:disabled {
   opacity: 0.7;
+  color: #111;
 }
 
 .prompt__send {
@@ -276,6 +280,7 @@ app-topbar {
 .prompt__send:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  color: #111;
 }
 
 .prompt__arrow {
@@ -480,4 +485,160 @@ app-footer {
   background: #f3f3ff; /* change if you want darker */
   color: #222;
   border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* bubble stack so actions sit under bubble */
+.msg__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: min(680px, 85%);
+}
+
+.msg--user .msg__stack {
+  align-items: flex-end;
+}
+
+/* actions row */
+.msg__actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0.85;
+}
+
+.msg__action {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.msg__action:hover {
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+.msg__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* stop button */
+.prompt__stop {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+}
+
+.prompt__stop:hover {
+  transform: translateX(3px);
+}
+
+/* editing bar */
+.editbar {
+  width: min(900px, 95vw);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.editbar__text {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.editbar__btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+}
+
+.editbar__btn--primary {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.editbar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================
+   INPUT WITH MIC INSIDE
+============================= */
+
+.prompt__field {
+  position: relative;
+  width: 100%;
+}
+
+/* add space on right for mic */
+.prompt__input {
+  width: 100%;
+  padding-right: 48px; /* space for mic */
+}
+
+/* mic button inside input */
+.prompt__mic {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+
+  display: grid;
+  place-items: center;
+
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+
+  transition: all 0.2s ease;
+}
+
+.prompt__mic:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* active (recording) state */
+.prompt__mic--active {
+  background: #ff4d4f;
+  color: white;
+  animation: pulseMic 1.2s infinite;
+}
+
+/* pulse animation */
+@keyframes pulseMic {
+  0% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 77, 79, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
 }
