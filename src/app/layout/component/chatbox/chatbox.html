@@ -22,6 +22,7 @@
       (exportChatId)="onExportChat($event)"
     ></app-sidebar>
   </div>
+
   <!-- RIGHT CONTENT -->
   <main class="chatbox">
     <div class="topbar-shell">
@@ -34,10 +35,7 @@
       ></app-topbar>
     </div>
 
-
-    <!-- CHAT AREA -->
     <section class="chat">
-
       <div class="chat__header" *ngIf="messages.length === 0">
         <h1 class="headline">Here when you need me.</h1>
         <p class="sub">Type a message and I'll respond.</p>
@@ -46,11 +44,11 @@
       <div class="chat__messages" role="log" aria-live="polite">
         <div
           class="msg"
-          *ngFor="let m of messages"
+          *ngFor="let m of messages; let i = index"
           [class.msg--user]="m.role === 'user'"
           [class.msg--ai]="m.role === 'ai'"
         >
-          <!-- ✅ AI avatar (only shows for bot messages) -->
+          <!-- AI avatar -->
           <img
             *ngIf="m.role === 'ai'"
             class="msg__avatar"
@@ -58,7 +56,90 @@
             alt="Bot"
           />
 
-          <div class="msg__bubble">{{ m.text }}</div>
+          <div class="msg__stack">
+            <!-- ✅ USER: bubble becomes editor when editing -->
+            <ng-container *ngIf="m.role === 'user'; else aiBubble">
+              <!-- normal bubble -->
+              <ng-container *ngIf="editingIndex !== i; else userEditBubble">
+                <div class="msg__bubble">{{ m.text }}</div>
+
+                <div class="msg__actions">
+                  <button
+                    type="button"
+                    class="msg__action"
+                    title="Copy"
+                    aria-label="Copy message"
+                    (click)="copyText(m.text)"
+                  >
+                    ⧉
+                  </button>
+
+                  <button
+                    type="button"
+                    class="msg__action"
+                    title="Edit"
+                    aria-label="Edit message"
+                    (click)="startEditUserMessage(i)"
+                    [disabled]="sending"
+                  >
+                    ✎
+                  </button>
+                </div>
+              </ng-container>
+
+              <!-- edit bubble (inline) -->
+              <ng-template #userEditBubble>
+                <div class="msg__bubble msg__bubble--editing">
+                  <textarea
+                    class="bubble__editor"
+                    [(ngModel)]="editingText"
+                    name="editingText{{ i }}"
+                    rows="1"
+                    (input)="autoGrow($event)"
+                    [disabled]="sending"
+                  ></textarea>
+
+                  <div class="bubble__edit-actions">
+                    <button
+                      type="button"
+                      class="bubble__btn"
+                      (click)="cancelEdit()"
+                      [disabled]="sending"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="button"
+                      class="bubble__btn bubble__btn--primary"
+                      (click)="saveEditAndResend()"
+                      [disabled]="sending || !editingText.trim()"
+                    >
+                      Save &amp; Resend
+                    </button>
+                  </div>
+                </div>
+
+                <!-- keep copy icon available while editing -->
+                <div class="msg__actions">
+                  <button
+                    type="button"
+                    class="msg__action"
+                    title="Copy"
+                    aria-label="Copy message"
+                    (click)="copyText(editingText || m.text)"
+                  >
+                    ⧉
+                  </button>
+                </div>
+              </ng-template>
+            </ng-container>
+
+            <!-- ✅ AI bubble -->
+            <ng-template #aiBubble>
+              <div class="msg__bubble">{{ m.text }}</div>
+            </ng-template>
+          </div>
         </div>
 
         <div class="typing" *ngIf="sending">
@@ -70,25 +151,55 @@
         </div>
       </div>
 
-      <form class="prompt" autocomplete="off" (ngSubmit)="sendMessage()">
-        <input
-          class="prompt__input"
-          type="text"
-          name="message"
-          placeholder="Ask me anything..."
-          [(ngModel)]="message"
-          [disabled]="sending"
-        />
+      <form class="prompt" autocomplete="off" (ngSubmit)="onSubmit()">
 
+        <!-- INPUT WRAPPER -->
+        <div class="prompt__field">
+          <input
+            class="prompt__input"
+            type="text"
+            name="message"
+            placeholder="Ask me anything..."
+            [(ngModel)]="message"
+          />
+
+          <!-- 🎤 MIC INSIDE INPUT -->
+          <button
+            type="button"
+            class="prompt__mic"
+            (click)="toggleVoice()"
+            [class.prompt__mic--active]="listening"
+            aria-label="Voice input"
+            title="Voice input"
+          >
+            🎤
+          </button>
+        </div>
+
+        <!-- SEND -->
         <button
+          *ngIf="!sending"
           class="prompt__send"
           type="submit"
-          [disabled]="sending || !message.trim()"
-          [class.prompt__send--disabled]="sending || !message.trim()"
+          [disabled]="!message.trim()"
+          aria-label="Send"
+          title="Send"
         >
-          <span class="prompt__arrow" *ngIf="!sending">➤</span>
-          <span class="prompt__loading" *ngIf="sending">◌</span>
+          <span class="prompt__arrow">➤</span>
         </button>
+
+        <!-- STOP -->
+        <button
+          *ngIf="sending"
+          class="prompt__stop"
+          type="button"
+          (click)="stopGeneration()"
+          aria-label="Stop"
+          title="Stop"
+        >
+          ■
+        </button>
+
       </form>
     </section>
 

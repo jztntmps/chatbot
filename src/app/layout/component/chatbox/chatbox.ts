@@ -8,7 +8,6 @@ import { Topbar } from '../topbar/topbar';
 import { FooterComponent } from '../footer/footer';
 import { SidebarComponent } from '../sidebar/sidebar';
 
-// ✅ FIXED PATH (chatbox.ts is in src/app/layout/component/chatbox/)
 import { ConversationService } from '../../../services/conversation';
 
 import { firstValueFrom, Subscription } from 'rxjs';
@@ -46,8 +45,25 @@ export class Chatbox implements OnInit, OnDestroy {
   sending = false;
   messages: ChatMsg[] = [];
 
+  // ✅ edit mode state
+  editingIndex: number | null = null;
+  editingText: string = '';
+  private originalEditText = '';
+
+  /** ✅ Auto-grow textarea height while editing bubble */
+  autoGrow(ev: Event) {
+    const ta = ev.target as HTMLTextAreaElement;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }
+
+  listening = false;
+  private recognition: any;
+  // ✅ cancel in-flight AI request
+  private inflightChatSub?: Subscription;
+
   // ✅ conversation tracking
-  userId = ''; // must be real userId (not email)
+  userId = '';
   activeConversationId: string | null = null;
 
   private readonly API_URL = 'http://localhost:8080/api/chat';
@@ -55,6 +71,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
   private navSub?: Subscription;
   private warnedNoSave = false;
+  private requestToken = 0;
 
   // archive modal
   showArchiveModal = false;
@@ -69,7 +86,6 @@ export class Chatbox implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.syncAuth();
 
-    // ✅ sync again whenever route changes to /chatbox
     this.navSub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
@@ -85,6 +101,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.navSub?.unsubscribe();
+    this.inflightChatSub?.unsubscribe();
   }
 
   private syncAuth() {
@@ -94,22 +111,12 @@ export class Chatbox implements OnInit, OnDestroy {
     this.userEmail = localStorage.getItem('userEmail') || 'User';
     this.userId = localStorage.getItem('userId') || '';
 
-    // ✅ restore active conversation across refresh (ONLY if logged in)
     const savedConvoIdRaw = localStorage.getItem('activeConversationId');
     const savedConvoId = this.normalizeId(savedConvoIdRaw);
     this.activeConversationId = this.isLoggedIn ? savedConvoId : null;
 
-    console.log('[syncAuth]', {
-      isLoggedInRaw: saved,
-      isLoggedIn: this.isLoggedIn,
-      userId: this.userId,
-      userEmail: this.userEmail,
-      activeConversationId: this.activeConversationId,
-    });
-
     if (this.isLoggedIn && this.userId) {
       this.loadConversations();
-      // ⚠️ DO NOT auto-open saved convo here (can cause 500 loop if id is stale)
     } else {
       this.chats = [];
       this.activeConversationId = null;
@@ -133,7 +140,7 @@ export class Chatbox implements OnInit, OnDestroy {
       );
 
       this.chats = (list || [])
-        .filter((c: any) => !c.archived) // ✅ hide archived chats
+        .filter((c: any) => !c.archived)
         .map((c: any) => ({
           id: this.extractConversationId(c) || '',
           title: c.title || '(Untitled)',
@@ -150,7 +157,6 @@ export class Chatbox implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
-    console.log('sidebarOpen:', this.sidebarOpen);
     this.cdr.detectChanges();
   }
 
@@ -158,11 +164,15 @@ export class Chatbox implements OnInit, OnDestroy {
     const normalized = this.normalizeId(chatId);
     if (!normalized) return;
 
+    // stop any in-flight response when switching chats
+    this.stopGeneration(false);
+
+    // exit edit mode
+    this.cancelEdit(false);
+
     try {
       const convo = await firstValueFrom(
-        this.http
-          .get<any>(`${this.CONVO_BASE}/${normalized}`)
-          .pipe(timeout(120000))
+        this.http.get<any>(`${this.CONVO_BASE}/${normalized}`).pipe(timeout(120000))
       );
 
       this.activeConversationId = this.extractConversationId(convo) || normalized;
@@ -182,7 +192,6 @@ export class Chatbox implements OnInit, OnDestroy {
     } catch (e) {
       console.error('Open chat failed', e);
 
-      // ✅ if saved id is stale, clear it so we stop failing
       this.activeConversationId = null;
       localStorage.removeItem('activeConversationId');
 
@@ -190,6 +199,7 @@ export class Chatbox implements OnInit, OnDestroy {
         role: 'ai',
         text: '⚠️ Failed to open conversation (maybe deleted). Starting a new chat.',
       });
+
       this.scrollToBottom();
       this.cdr.detectChanges();
     }
@@ -199,11 +209,14 @@ export class Chatbox implements OnInit, OnDestroy {
   openSettings() {}
 
   startNewChat() {
+    // stop generation + exit edit mode
+    this.stopGeneration(false);
+    this.cancelEdit(false);
+
     this.messages = [{ role: 'ai', text: 'Hi! Ask me anything.' }];
     this.message = '';
     this.sending = false;
 
-    // ✅ IMPORTANT: new chat = new conversation (new title on next send)
     this.activeConversationId = null;
     localStorage.removeItem('activeConversationId');
 
@@ -220,7 +233,6 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   goArchive() {
-    // show modal (or route if you want)
     this.openArchiveModal();
   }
 
@@ -234,11 +246,37 @@ export class Chatbox implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
+  // ==========================================
+  // ✅ NEW: submit handler (send OR edit resend)
+  // ==========================================
+  onSubmit() {
+    // can type anytime, but cannot send while generating
+    if (this.sending) return;
+
+    // if editing -> Save & Resend
+    if (this.editingIndex !== null) {
+      this.saveEditAndResend();
+      return;
+    }
+
+    // normal send
+    this.sendMessage();
+  }
+
+  // ==========================================
+  // ✅ UPDATED: sendMessage now supports cancel
+  // ==========================================
   async sendMessage() {
     const text = this.message.trim();
     if (!text || this.sending) return;
 
     const canSave = this.isLoggedIn && !!this.userId;
+
+    // ✅ unique token per request (prevents cross-chat leaks even when convoId is null)
+    const myToken = ++this.requestToken;
+
+    // ✅ snapshot current conversation id at send time
+    const convoAtSend = this.normalizeId(this.activeConversationId);
 
     if (!canSave && !this.warnedNoSave) {
       this.warnedNoSave = true;
@@ -248,43 +286,231 @@ export class Chatbox implements OnInit, OnDestroy {
       });
     }
 
+    // push user msg
     this.messages.push({ role: 'user', text });
+
+    // clear input but user can type again
     this.message = '';
     this.sending = true;
     this.scrollToBottom();
+    this.cdr.detectChanges();
 
     // =========================
-    // 1) CHAT (Ollama) request
+    // 1) CHAT (Cancelable) request
     // =========================
     let reply = '';
     try {
-      const res = await firstValueFrom(
-        this.http
+      reply = await new Promise<string>((resolve, reject) => {
+        this.inflightChatSub?.unsubscribe();
+
+        this.inflightChatSub = this.http
           .post<{ reply: string }>(this.API_URL, { message: text })
           .pipe(timeout(120000))
-      );
+          .subscribe({
+            next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
+            error: (err) => reject(err),
+          });
+      });
 
-      reply = (res?.reply ?? '').trim() || '(Empty reply)';
+      // ✅ if stopped or a newer request started, ignore
+      if (!this.sending || myToken !== this.requestToken) return;
+
+      // ✅ if user switched conversations while waiting, ignore
+      if (this.normalizeId(this.activeConversationId) !== convoAtSend) {
+        this.sending = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
       this.messages.push({ role: 'ai', text: reply });
     } catch (e) {
-      const err = e as any;
+      if (!this.sending || myToken !== this.requestToken) return;
 
+      // if user switched conversation, ignore the error bubble too
+      if (this.normalizeId(this.activeConversationId) !== convoAtSend) {
+        this.sending = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      const err = e as any;
       let msg = '⚠️ Request failed.';
       if (err?.name === 'TimeoutError') msg = '⚠️ Timed out. Server took too long.';
-      if (err instanceof HttpErrorResponse) {
-        msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
-      }
+      if (err instanceof HttpErrorResponse) msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
 
       this.messages.push({ role: 'ai', text: msg });
       this.sending = false;
       this.cdr.detectChanges();
       this.scrollToBottom();
-      return; // ✅ stop here (no saving if chat failed)
+      return;
     }
 
     // =========================
     // 2) SAVE (DB) request
     // =========================
+    if (canSave) {
+      try {
+        // ✅ if user switched chats, do NOT save
+        if (myToken !== this.requestToken) throw new Error('stale request');
+        if (this.normalizeId(this.activeConversationId) !== convoAtSend) throw new Error('switched chat');
+
+        // Use a local variable (do not mutate activeConversationId until finished)
+        let convoId = this.normalizeId(this.activeConversationId);
+
+        if (!convoId) {
+          const created = await firstValueFrom(
+            this.convoApi
+              .createConversation({
+                userId: this.userId,
+                firstUserMessage: text,
+                firstBotResponse: reply,
+              })
+              .pipe(timeout(120000))
+          );
+
+          convoId = this.normalizeId(this.extractConversationId(created));
+
+          // ✅ only set activeConversationId if user still in same chat
+          if (myToken === this.requestToken && this.normalizeId(this.activeConversationId) === convoAtSend) {
+            this.activeConversationId = convoId;
+            if (convoId) localStorage.setItem('activeConversationId', convoId);
+            this.loadConversations();
+          }
+        } else {
+          await firstValueFrom(
+            this.convoApi
+              .addTurn(convoId, {
+                userMessage: text,
+                botResponse: reply,
+              })
+              .pipe(timeout(120000))
+          );
+        }
+      } catch (saveErr) {
+        // ignore stale/switch-chat saves silently
+        console.warn('Save skipped/failed:', saveErr);
+      }
+    }
+
+    // ✅ only end sending if still same request
+    if (myToken === this.requestToken) {
+      this.sending = false;
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+    }
+  }
+  // ==========================================
+  // ✅ NEW: Stop generation (cancel request)
+  // ==========================================
+  stopGeneration(openEditLast: boolean = true) {
+    this.inflightChatSub?.unsubscribe();
+    this.inflightChatSub = undefined;
+
+    this.sending = false;
+
+    // ✅ only auto-open edit if not already editing
+    if (openEditLast && this.editingIndex === null) {
+      const idx = this.findLastUserIndex();
+      if (idx !== null) this.startEditUserMessage(idx);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  // ==========================================
+  // ✅ NEW: Edit + Copy helpers
+  // ==========================================
+  startEditUserMessage(index: number) {
+    if (this.editingIndex !== null && this.editingIndex !== index) return;
+    if (this.messages[index]?.role !== 'user') return;
+
+    if (this.sending) this.stopGeneration(false);
+
+    this.editingIndex = index;
+    this.originalEditText = this.messages[index].text;
+    this.editingText = this.messages[index].text;
+
+    this.cdr.detectChanges();
+  }
+
+  cancelEdit(clearText: boolean = true) {
+    this.editingIndex = null;
+    this.editingText = '';
+    this.originalEditText = '';
+
+    if (clearText) this.message = '';
+
+    this.cdr.detectChanges();
+  }
+  saveEditAndResend() {
+    if (this.editingIndex === null) return;
+
+    const newText = this.editingText.trim();
+    if (!newText) return;
+
+    // ✅ update bubble
+    this.messages[this.editingIndex].text = newText;
+
+    // ✅ remove old AI messages after edited point
+    this.messages = this.messages.slice(0, this.editingIndex + 1);
+
+    // ✅ exit edit mode
+    this.editingIndex = null;
+    this.editingText = '';
+    this.originalEditText = '';
+
+    this.cdr.detectChanges();
+    this.scrollToBottom();
+
+    // ✅ regenerate AI response (same behavior as before)
+    this.startBotResponseForEditedMessage(newText);
+  }
+
+  private async startBotResponseForEditedMessage(text: string) {
+    // behaves like normal send but without pushing a new user bubble (already edited)
+    if (this.sending) return;
+
+    this.sending = true;
+    this.scrollToBottom();
+    this.cdr.detectChanges();
+
+    const canSave = this.isLoggedIn && !!this.userId;
+
+    let reply = '';
+    try {
+      reply = await new Promise<string>((resolve, reject) => {
+        this.inflightChatSub?.unsubscribe();
+
+        this.inflightChatSub = this.http
+          .post<{ reply: string }>(this.API_URL, { message: text })
+          .pipe(timeout(120000))
+          .subscribe({
+            next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
+            error: (err) => reject(err),
+          });
+      });
+
+      if (!this.sending) return;
+
+      this.messages.push({ role: 'ai', text: reply });
+    } catch (e) {
+      if (!this.sending) return;
+
+      const err = e as any;
+      let msg = '⚠️ Request failed.';
+      if (err?.name === 'TimeoutError') msg = '⚠️ Timed out. Server took too long.';
+      if (err instanceof HttpErrorResponse) {
+        msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
+      }
+      this.messages.push({ role: 'ai', text: msg });
+
+      this.sending = false;
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+      return;
+    }
+
+    // save edited resend as a new turn
     if (canSave) {
       try {
         this.activeConversationId = this.normalizeId(this.activeConversationId);
@@ -319,17 +545,33 @@ export class Chatbox implements OnInit, OnDestroy {
           );
         }
       } catch (saveErr) {
-        // ✅ don't show 403/500 as a chat bubble
         console.warn('Save failed (chat still works):', saveErr);
-
-        // optional: you can show a small one-time warning instead of bubble
-        // alert('Chat replied, but saving failed. Please login again.');
       }
     }
 
     this.sending = false;
     this.cdr.detectChanges();
     this.scrollToBottom();
+  }
+
+  async copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
+  private findLastUserIndex(): number | null {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      if (this.messages[i].role === 'user') return i;
+    }
+    return null;
   }
 
   private scrollToBottom(): void {
@@ -362,14 +604,10 @@ export class Chatbox implements OnInit, OnDestroy {
     }
 
     try {
-      await firstValueFrom(
-        this.convoApi.deleteConversation(id).pipe(timeout(120000))
-      );
+      await firstValueFrom(this.convoApi.deleteConversation(id).pipe(timeout(120000)));
 
-      // ✅ update sidebar list
       this.chats = this.chats.filter((c) => c.id !== id);
 
-      // ✅ if the deleted chat is currently open, reset the chat UI
       if (this.activeConversationId === id) {
         this.activeConversationId = null;
         localStorage.removeItem('activeConversationId');
@@ -386,7 +624,9 @@ export class Chatbox implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ PDF export (FIXED: now correctly placed inside class, not inside catch block)
+  // ===============================
+  // ✅ PDF export (UNCHANGED BELOW)
+  // ===============================
   async exportConversationPdf() {
     if (!this.messages || this.messages.length === 0) {
       alert('No conversation to export yet.');
@@ -416,7 +656,6 @@ export class Chatbox implements OnInit, OnDestroy {
     const footerNote =
       'Note: This transcript is generated for documentation purposes only. Personal identifiers are excluded in compliance with applicable data privacy regulations.';
 
-    // ===== TABLE layout =====
     const tableX = margin;
     const tableW = pageW - margin * 2;
     const colTime = 70;
@@ -427,11 +666,9 @@ export class Chatbox implements OnInit, OnDestroy {
     const rowPadY = 8;
     const lineH = 14;
 
-    // Draw header (logo + title + date + divider) on each page
     const drawHeader = () => {
       let y = topMargin;
 
-      // Logo centered (header)
       const logoW = 140;
       const logoH = 46;
       const logoX = (pageW - logoW) / 2;
@@ -441,14 +678,12 @@ export class Chatbox implements OnInit, OnDestroy {
       }
       y += 60;
 
-      // Title
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(0);
       doc.text('Conversation Transcript', margin, y);
       y += 18;
 
-      // Date issued
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(80);
@@ -456,25 +691,17 @@ export class Chatbox implements OnInit, OnDestroy {
       doc.setTextColor(0);
       y += 14;
 
-      // Divider
       doc.setDrawColor(210);
       doc.line(margin, y, pageW - margin, y);
       y += 18;
 
-      return y; // returns start Y for table area
+      return y;
     };
 
     const drawFooter = () => {
-      // Footer divider line
       doc.setDrawColor(210);
-      doc.line(
-        margin,
-        pageH - bottomMargin + 18,
-        pageW - margin,
-        pageH - bottomMargin + 18
-      );
+      doc.line(margin, pageH - bottomMargin + 18, pageW - margin, pageH - bottomMargin + 18);
 
-      // Footer note text near bottom
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(9);
       doc.setTextColor(90);
@@ -499,12 +726,7 @@ export class Chatbox implements OnInit, OnDestroy {
       doc.rect(tableX, y, tableW, headerH, 'FD');
 
       doc.line(tableX + colTime, y, tableX + colTime, y + headerH);
-      doc.line(
-        tableX + colTime + colSender,
-        y,
-        tableX + colTime + colSender,
-        y + headerH
-      );
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + headerH);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
@@ -533,7 +755,6 @@ export class Chatbox implements OnInit, OnDestroy {
 
     drawTableHeader();
 
-    // synthetic time (since ChatMsg has no createdAt)
     const baseTime = new Date();
     baseTime.setSeconds(0, 0);
 
@@ -542,7 +763,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
     for (let i = 0; i < this.messages.length; i++) {
       const m = this.messages[i];
-      const sender = m.role === 'user' ? 'User' : 'Emman'; // ✅ Assistant -> Emman
+      const sender = m.role === 'user' ? 'User' : 'Emman';
       const msgText = (m.text ?? '').trim();
       if (!msgText) continue;
 
@@ -558,12 +779,7 @@ export class Chatbox implements OnInit, OnDestroy {
       doc.rect(tableX, y, tableW, rowH);
 
       doc.line(tableX + colTime, y, tableX + colTime, y + rowH);
-      doc.line(
-        tableX + colTime + colSender,
-        y,
-        tableX + colTime + colSender,
-        y + rowH
-      );
+      doc.line(tableX + colTime + colSender, y, tableX + colTime + colSender, y + rowH);
 
       const textY = y + rowPadY + 11;
 
@@ -601,20 +817,15 @@ export class Chatbox implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ archive (FIXED: inside class)
   async onArchiveChat(conversationId: string) {
     const id = this.normalizeId(conversationId);
     if (!id) return;
 
     try {
-      await firstValueFrom(
-        this.convoApi.archiveConversation(id).pipe(timeout(120000))
-      );
+      await firstValueFrom(this.convoApi.archiveConversation(id).pipe(timeout(120000)));
 
-      // ✅ Remove from sidebar immediately
       this.chats = this.chats.filter((c) => c.id !== id);
 
-      // ✅ If archived chat is currently open, reset chat view
       if (this.activeConversationId === id) {
         this.activeConversationId = null;
         localStorage.removeItem('activeConversationId');
@@ -641,17 +852,15 @@ export class Chatbox implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-    async onExportChat(conversationId: string) {
+  async onExportChat(conversationId: string) {
     const id = this.normalizeId(conversationId);
     if (!id) return;
 
     try {
-      // 1) Load that conversation from backend
       const convo = await firstValueFrom(
         this.http.get<any>(`${this.CONVO_BASE}/${id}`).pipe(timeout(120000))
       );
 
-      // 2) Build messages from turns
       const turns = convo?.turns || [];
       const rebuilt: ChatMsg[] = [];
 
@@ -665,9 +874,8 @@ export class Chatbox implements OnInit, OnDestroy {
         return;
       }
 
-      // 3) Use conversation title for filename
       const title =
-        (convo?.title || this.chats.find(c => c.id === id)?.title || 'conversation').trim();
+        (convo?.title || this.chats.find((c) => c.id === id)?.title || 'conversation').trim();
 
       await this.exportConversationPdfForMessages(rebuilt, title);
     } catch (e) {
@@ -678,13 +886,12 @@ export class Chatbox implements OnInit, OnDestroy {
 
   private sanitizeFilename(name: string) {
     return name
-      .replace(/[\/\\?%*:|"<>]/g, '-') // windows unsafe chars
+      .replace(/[\/\\?%*:|"<>]/g, '-')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 60);
   }
 
-  /** ✅ Same PDF layout, but exports the provided messages + uses title in filename */
   private async exportConversationPdfForMessages(msgs: ChatMsg[], title: string) {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
@@ -726,14 +933,11 @@ export class Chatbox implements OnInit, OnDestroy {
       const logoH = 46;
       const logoX = (pageW - logoW) / 2;
 
-      if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', logoX, y - 8, logoW, logoH);
-      }
+      if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', logoX, y - 8, logoW, logoH);
       y += 60;
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.setTextColor(0);
       doc.text('Conversation Transcript', margin, y);
       y += 18;
 
@@ -855,4 +1059,48 @@ export class Chatbox implements OnInit, OnDestroy {
     const safeTitle = this.sanitizeFilename(title || 'conversation');
     doc.save(`${safeTitle}.pdf`);
   }
+
+  toggleVoice() {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert('Speech recognition is not supported in this browser.');
+    return;
+  }
+
+  if (!this.recognition) {
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'en-US';
+    this.recognition.continuous = false;
+    this.recognition.interimResults = false;
+
+    this.recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      this.message = transcript; // ✅ put into input
+      this.cdr.detectChanges();
+    };
+
+    this.recognition.onend = () => {
+      this.listening = false;
+      this.cdr.detectChanges();
+    };
+
+    this.recognition.onerror = () => {
+      this.listening = false;
+      this.cdr.detectChanges();
+    };
+  }
+
+  if (!this.listening) {
+    this.recognition.start();
+    this.listening = true;
+  } else {
+    this.recognition.stop();
+    this.listening = false;
+  }
+
+  this.cdr.detectChanges();
+}
 }
