@@ -7,61 +7,153 @@
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
 }
 
+/* LAYOUT */
 .layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
+/* SIDEBAR */
 .sidebar-shell {
   width: 320px;
   flex: 0 0 320px;
   overflow: hidden;
 }
 
+/* RIGHT CONTENT */
 .chatbox {
   flex: 1 1 auto;
   min-width: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 0;
   overflow: hidden;
   background: transparent;
 }
 
+/* TOPBAR */
 .topbar-shell {
   position: sticky;
   top: 0;
   z-index: 80;
   padding: 12px 16px;
-  background: transparent; /* let the page background show through */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: transparent;
   border-bottom: none;
   box-shadow: none;
 }
 
+/* MAIN AREA */
 .preview-area {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
   padding: 22px 24px 18px;
+}
+
+/* CHAT PANEL */
+.chat-panel {
+  width: min(1100px, 100%);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* LOADING + EMPTY */
+.loading,
+.empty {
   text-align: center;
+  padding: 18px 12px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* MESSAGES SCROLL */
+.chat__messages {
+  width: min(900px, 95vw);
+
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 0 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* ✅ same */
+}
+
+/* each message row */
+.chat__row {
+  display: flex;
+  width: 100%;
+  gap: 12px;       /* ✅ same gap */
+  align-items: flex-start;
+  margin: 14px 0;  /* ✅ same */
+}
+
+.chat__row.is-user {
+  justify-content: flex-end;
+}
+
+.chat__row.is-ai {
+  justify-content: flex-start;
+}
+
+/* avatar (same as your chatbox) */
+.chat__avatar {
+  width: 34px;
+  height: 37px;     /* ✅ same */
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 34px;
+  margin-top: 5px;
+}
+
+/* bubble (same as chatbox size) */
+.chat__bubble {
+  max-width: min(680px, 85%);
+  padding: 14px 16px;
+  border-radius: 16px;
+
+  font-size: 15px;     /* ✅ same */
+  line-height: 1.55;   /* ✅ same */
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  background: rgba(255, 255, 255, 0.9);
   color: #111;
 }
 
-app-footer {
-  flex: 0 0 auto;
-  padding: 8px 0 16px;
+/* AI bubble look (soft like your chatbox) */
+.chat__row.is-ai .chat__bubble {
+  background: #f3f3ff;
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+/* User bubble look (same as your code right now – light) */
+.chat__row.is-user .chat__bubble {
+  background: #f3f3ff;
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+/* ARCHIVE NOTICE (BOTTOM) */
 .archive-notice {
+  flex: 0 0 auto;
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 12px 16px 6px;
   text-align: center;
 }
 
@@ -81,8 +173,9 @@ app-footer {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
+
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
 }
 
 .archive-notice__btn img {
@@ -96,10 +189,32 @@ app-footer {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
+.archive-notice__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* FOOTER */
+app-footer {
+  flex: 0 0 auto;
+  padding: 8px 0 16px;
+}
+
+/* RESPONSIVE */
 @media (max-width: 900px) {
   .topbar-shell {
     padding: 10px 12px;
-    box-shadow: none;
+  }
+
+  .preview-area {
+    padding: 14px 12px 12px;
+  }
+
+  .chat__bubble {
+    font-size: 16px;
+    padding: 16px 18px;
   }
 }
 
@@ -114,13 +229,5 @@ app-footer {
     z-index: 60;
     background: transparent;
     flex: 0 0 auto;
-  }
-
-  .preview-area {
-    padding: 14px 12px 12px;
-  }
-
-  .preview-area__content {
-    padding: 18px;
   }
 }

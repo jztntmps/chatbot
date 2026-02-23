@@ -1103,4 +1103,9 @@ export class Chatbox implements OnInit, OnDestroy {
 
   this.cdr.detectChanges();
 }
+  reloadConversations() {
+  if (this.isLoggedIn && this.userId) {
+    this.loadConversations();
+  }
+}
 }

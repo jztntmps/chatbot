@@ -37,12 +37,20 @@ export class SidebarComponent {
   // per chat actions
   @Output() archiveChatId = new EventEmitter<string>();
   @Output() deleteChatId = new EventEmitter<string>();
+  @Output() refreshChats = new EventEmitter<void>();
 
   settingsOpen = false;
   showAll = false;
   showModal = false;
 
   openMenuId: string | null = null;
+
+  get profileInitial(): string {
+  if (!this.username) return 'U';
+  return this.username.charAt(0).toUpperCase();
+}
+
+
 
   trackById(_: number, c: ChatPreview) {
     return c.id;
@@ -112,4 +120,11 @@ export class SidebarComponent {
     this.openMenuId = null;
     this.settingsOpen = false;
   }
+  onArchiveChanged() {
+  // close modal if you want
+  this.showModal = false;
+
+  // tell Chatbox to reload conversations from DB
+  this.refreshChats.emit();
+}
 }

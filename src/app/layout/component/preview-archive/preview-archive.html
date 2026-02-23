@@ -1,4 +1,3 @@
-
 <div class="layout">
   <!-- SIDEBAR -->
   <div class="sidebar-shell" *ngIf="isLoggedIn && sidebarOpen">
@@ -16,6 +15,7 @@
 
   <!-- RIGHT CONTENT -->
   <main class="chatbox">
+    <!-- TOPBAR -->
     <div class="topbar-shell">
       <app-topbar
         [isLoggedIn]="isLoggedIn"
@@ -27,18 +27,58 @@
 
     <!-- PREVIEW AREA -->
     <section class="preview-area">
-      <p>preview-archive works!</p>
-    </section>
+      <div class="chat-panel">
+        <!-- LOADING STATE -->
+        <div class="loading" *ngIf="loading">
+          Loading archived conversation…
+        </div>
 
-    <div class="archive-notice">
-      <p class="archive-notice__text">
-        This conversation is archived. To continue, please unarchive it first.
-      </p>
-      <button class="archive-notice__btn" type="button">
-        <img src="/assets/unarchive_white.png" alt="" aria-hidden="true" />
-        <span>Unarchive</span>
-      </button>
-    </div>
+        <!-- MESSAGES -->
+        <div class="chat__messages" *ngIf="!loading">
+          <div
+            *ngFor="let m of messages"
+            class="chat__row"
+            [class.is-ai]="m.role === 'ai'"
+            [class.is-user]="m.role === 'user'"
+          >
+            <!-- AI avatar (left) -->
+            <img
+              *ngIf="m.role === 'ai'"
+              class="chat__avatar"
+              src="/assets/profile.png"
+              alt="AI"
+            />
+
+            <!-- bubble -->
+            <div class="chat__bubble">
+              {{ m.text }}
+            </div>
+          </div>
+
+          <!-- empty state -->
+          <div class="empty" *ngIf="messages.length === 0">
+            No messages found in this archived chat.
+          </div>
+        </div>
+
+        <!-- ARCHIVE NOTICE (ALWAYS shown on this page) -->
+        <div class="archive-notice">
+          <p class="archive-notice__text">
+            This conversation is archived. To continue, please unarchive it first.
+          </p>
+
+          <button
+            class="archive-notice__btn"
+            type="button"
+            (click)="unarchiveConversation()"
+            [disabled]="!conversationId"
+          >
+            <img src="/assets/unarchive_white.png" alt="" aria-hidden="true" />
+            <span>Unarchive</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
     <app-footer></app-footer>
   </main>

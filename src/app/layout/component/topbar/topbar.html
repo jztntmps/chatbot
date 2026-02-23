@@ -25,8 +25,18 @@
         </div>
 
         <button class="dots" type="button" (click)="toggleMenu($event)">
-          <span></span><span></span><span></span>
-        </button>
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    class="dots__icon"
+  >
+    <circle cx="12" cy="5" r="1.5"></circle>
+    <circle cx="12" cy="12" r="1.5"></circle>
+    <circle cx="12" cy="19" r="1.5"></circle>
+  </svg>
+</button>
 
         <div class="dropdown" *ngIf="menuOpen">
           <button class="dropdown__item" type="button" (click)="onArchive()">

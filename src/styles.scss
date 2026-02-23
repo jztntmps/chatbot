@@ -3,3 +3,9 @@ html, body {
   margin: 0;
   overflow: hidden;
 }
+app-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 50000 !important;
+  display: block;
+}

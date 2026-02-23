@@ -1,5 +1,9 @@
-<aside class="sidebar" [class.sidebar--closed]="!isOpen" (click)="$event.stopPropagation()">
-
+<!-- sidebar.html -->
+<aside
+  class="sidebar"
+  [class.sidebar--closed]="!isOpen"
+  (click)="$event.stopPropagation()"
+>
   <div class="sidebar-header">
     <div class="sidebar__top">
       <button
@@ -16,24 +20,42 @@
       <div class="avatar">
         <img *ngIf="avatarUrl; else fallback" [src]="avatarUrl" alt="Avatar" />
         <ng-template #fallback>
-          <div class="avatar__fallback">👤</div>
+          <!-- ✅ First letter of username -->
+          <div class="avatar__fallback">{{ profileInitial }}</div>
         </ng-template>
       </div>
     </div>
 
-    <button
-      class="newchat"
-      type="button"
-      (click)="settingsOpen = false; openMenuId = null; newChat.emit()"
+<button
+  class="newchat"
+  type="button"
+  (click)="settingsOpen = false; openMenuId = null; newChat.emit()"
+>
+  <span class="newchat__content">
+    
+    <!-- ✅ SVG PLUS ICON -->
+    <svg
+      class="newchat__icon"
+      width="18"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     >
-      <span class="newchat__plus">＋</span>
-      <span class="newchat__text">New Chat</span>
-    </button>
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+
+    <span class="newchat__text">New Chat</span>
+  </span>
+</button>
   </div>
 
   <div class="sidebar-body">
     <div class="list">
-
       <div
         class="chat-card"
         *ngFor="let c of (showAll ? chats : (chats | slice:0:3)); trackBy: trackById"
@@ -53,28 +75,41 @@
             ⋯
           </button>
 
-          <div class="chat-card__menu"
-              *ngIf="openMenuId === c.id"
-              (click)="$event.stopPropagation()">
-
-            <button class="chat-card__menu-item" type="button" (click)="archiveChat(c.id)">
+          <div
+            class="chat-card__menu"
+            *ngIf="openMenuId === c.id"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              class="chat-card__menu-item"
+              type="button"
+              (click)="archiveChat(c.id)"
+            >
               <img class="menu-icon" src="assets/archive.png" alt="Archive" />
               <span>Archive</span>
             </button>
 
-            <!-- ✅ EXPORT (new) -->
-            <button class="chat-card__menu-item" type="button" (click)="exportChat(c.id)">
-              <img class="menu-icon" src="assets/export_icon.png" alt="Export" />
+            <button
+              class="chat-card__menu-item"
+              type="button"
+              (click)="exportChat(c.id)"
+            >
+              <img
+                class="menu-icon"
+                src="assets/export_icon.png"
+                alt="Export"
+              />
               <span>Export</span>
             </button>
 
-            <button class="chat-card__menu-item chat-card__menu-item--danger"
-                    type="button"
-                    (click)="deleteChat(c.id)">
+            <button
+              class="chat-card__menu-item chat-card__menu-item--danger"
+              type="button"
+              (click)="deleteChat(c.id)"
+            >
               <img class="menu-icon" src="assets/delete.png" alt="Delete" />
               <span>Delete</span>
             </button>
-
           </div>
         </div>
       </div>
@@ -87,7 +122,6 @@
       >
         {{ showAll ? 'Show Less' : 'See All' }}
       </button>
-
     </div>
   </div>
 
@@ -106,8 +140,16 @@
       *ngIf="settingsOpen"
       (click)="$event.stopPropagation()"
     >
-      <button class="settings-menu__item" type="button" (click)="clickArchive()">
-        <img class="settings-menu__icon-img" src="/assets/archive.png" alt="Archive" />
+      <button
+        class="settings-menu__item"
+        type="button"
+        (click)="clickArchive()"
+      >
+        <img
+          class="settings-menu__icon-img"
+          src="/assets/archive.png"
+          alt="Archive"
+        />
         <span>Archive</span>
       </button>
 
@@ -116,18 +158,20 @@
         type="button"
         (click)="clickLogout()"
       >
-        <img class="settings-menu__icon-img" src="/assets/logout.png" alt="Logout" />
+        <img
+          class="settings-menu__icon-img"
+          src="/assets/logout.png"
+          alt="Logout"
+        />
         <span>Logout</span>
       </button>
     </div>
   </div>
-
 </aside>
 
 <app-modal
   *ngIf="showModal"
   [userId]="userId"
   (close)="showModal=false"
- >
-</app-modal>
-
+  (changed)="onArchiveChanged()"
+></app-modal>
