@@ -6,7 +6,19 @@
 >
   <div class="sidebar-header">
     <div class="sidebar__top">
+      <!-- ✅ profile.png always visible -->
       <button
+        class="profile-toggle"
+        type="button"
+        (click)="toggle.emit(); $event.stopPropagation()"
+        aria-label="Toggle sidebar"
+      >
+        <img src="assets/profile.png" alt="Profile" />
+      </button>
+
+      <!-- ✅ burger only when sidebar is OPEN -->
+      <button
+        *ngIf="isOpen"
         class="burger"
         type="button"
         (click)="toggle.emit(); $event.stopPropagation()"
@@ -15,7 +27,6 @@
         ☰
       </button>
     </div>
-
     <div class="profile">
       <div class="avatar">
         <img *ngIf="avatarUrl; else fallback" [src]="avatarUrl" alt="Avatar" />

@@ -18,7 +18,6 @@ export class IndexLogin {
   errorMsg = '';
   loading = false;
 
-  // ⚠️ Make sure this matches your backend controller mapping
   private apiUrl = 'http://localhost:8080/api/auth/login';
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -49,7 +48,6 @@ export class IndexLogin {
       .post<any>(this.apiUrl, { email: this.email.trim(), password: this.password })
       .subscribe({
         next: (res) => {
-          // ✅ get real user id from backend response
           const userId = res?.userId || res?.id || res?._id;
 
           if (!userId) {
@@ -58,11 +56,11 @@ export class IndexLogin {
             return;
           }
 
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userEmail', res?.email || this.email.trim());
-          localStorage.setItem('userId', userId); // ✅ IMPORTANT
+          // ✅ sessionStorage so closing tab logs out
+          sessionStorage.setItem('isLoggedIn', 'true');
+          sessionStorage.setItem('userEmail', res?.email || this.email.trim());
+          sessionStorage.setItem('userId', userId);
 
-          // ✅ go to your chat route
           this.router.navigate(['/chatbox']);
           this.loading = false;
         },

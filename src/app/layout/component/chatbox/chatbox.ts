@@ -73,6 +73,9 @@ export class Chatbox implements OnInit, OnDestroy {
   private warnedNoSave = false;
   private requestToken = 0;
 
+  // ✅ session key
+  private readonly SS_ACTIVE_CONVO = 'activeConversationId';
+
   // archive modal
   showArchiveModal = false;
 
@@ -86,6 +89,13 @@ export class Chatbox implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.syncAuth();
+
+    // ✅ IMPORTANT:
+    // Only when LOGGED IN -> restore last active conversation after reload.
+    // If NOT logged in -> do NOTHING (no changes in guest behavior).
+    if (this.isLoggedIn && this.activeConversationId) {
+      this.openChat(this.activeConversationId);
+    }
 
     this.navSub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -106,22 +116,24 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   private syncAuth() {
-    const saved = localStorage.getItem('isLoggedIn');
+    const saved = sessionStorage.getItem('isLoggedIn');
 
     this.isLoggedIn = saved === 'true' || saved === '1';
-    this.userEmail = localStorage.getItem('userEmail') || 'User';
-    this.userId = localStorage.getItem('userId') || '';
+    this.userEmail = sessionStorage.getItem('userEmail') || 'Guest';
+    this.userId = sessionStorage.getItem('userId') || '';
 
-    const savedConvoIdRaw = localStorage.getItem('activeConversationId');
+    const savedConvoIdRaw = sessionStorage.getItem(this.SS_ACTIVE_CONVO);
     const savedConvoId = this.normalizeId(savedConvoIdRaw);
     this.activeConversationId = this.isLoggedIn ? savedConvoId : null;
 
     if (this.isLoggedIn && this.userId) {
       this.loadConversations();
     } else {
+      // ✅ Guest mode: allow chat, but no saved conversations
+      // (NO reset of messages here — keep current behavior)
       this.chats = [];
       this.activeConversationId = null;
-      localStorage.removeItem('activeConversationId');
+      sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
     }
 
     this.cdr.detectChanges();
@@ -177,7 +189,11 @@ export class Chatbox implements OnInit, OnDestroy {
       );
 
       this.activeConversationId = this.extractConversationId(convo) || normalized;
-      localStorage.setItem('activeConversationId', this.activeConversationId);
+
+      // ✅ save only if logged in
+      if (this.isLoggedIn && this.activeConversationId) {
+        sessionStorage.setItem(this.SS_ACTIVE_CONVO, this.activeConversationId);
+      }
 
       const turns = convo?.turns || [];
       const rebuilt: ChatMsg[] = [];
@@ -194,7 +210,7 @@ export class Chatbox implements OnInit, OnDestroy {
       console.error('Open chat failed', e);
 
       this.activeConversationId = null;
-      localStorage.removeItem('activeConversationId');
+      sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
 
       this.messages.push({
         role: 'ai',
@@ -219,7 +235,7 @@ export class Chatbox implements OnInit, OnDestroy {
     this.sending = false;
 
     this.activeConversationId = null;
-    localStorage.removeItem('activeConversationId');
+    sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
 
     this.scrollToBottom();
     this.cdr.detectChanges();
@@ -238,11 +254,8 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   logout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('activeConversationId');
-
+    // ✅ Clear session so user is not logged in after logout
+    sessionStorage.clear();
     this.syncAuth();
     this.router.navigate(['/']);
   }
@@ -273,7 +286,7 @@ export class Chatbox implements OnInit, OnDestroy {
 
     const canSave = this.isLoggedIn && !!this.userId;
 
-    // ✅ unique token per request (prevents cross-chat leaks even when convoId is null)
+    // ✅ unique token per request
     const myToken = ++this.requestToken;
 
     // ✅ snapshot current conversation id at send time
@@ -351,11 +364,10 @@ export class Chatbox implements OnInit, OnDestroy {
     // =========================
     if (canSave) {
       try {
-        // ✅ if user switched chats, do NOT save
         if (myToken !== this.requestToken) throw new Error('stale request');
-        if (this.normalizeId(this.activeConversationId) !== convoAtSend) throw new Error('switched chat');
+        if (this.normalizeId(this.activeConversationId) !== convoAtSend)
+          throw new Error('switched chat');
 
-        // Use a local variable (do not mutate activeConversationId until finished)
         let convoId = this.normalizeId(this.activeConversationId);
 
         if (!convoId) {
@@ -371,10 +383,12 @@ export class Chatbox implements OnInit, OnDestroy {
 
           convoId = this.normalizeId(this.extractConversationId(created));
 
-          // ✅ only set activeConversationId if user still in same chat
           if (myToken === this.requestToken && this.normalizeId(this.activeConversationId) === convoAtSend) {
             this.activeConversationId = convoId;
-            if (convoId) localStorage.setItem('activeConversationId', convoId);
+
+            // ✅ store active convo only for logged in
+            if (convoId) sessionStorage.setItem(this.SS_ACTIVE_CONVO, convoId);
+
             this.loadConversations();
           }
         } else {
@@ -388,20 +402,19 @@ export class Chatbox implements OnInit, OnDestroy {
           );
         }
       } catch (saveErr) {
-        // ignore stale/switch-chat saves silently
         console.warn('Save skipped/failed:', saveErr);
       }
     }
 
-    // ✅ only end sending if still same request
     if (myToken === this.requestToken) {
       this.sending = false;
       this.cdr.detectChanges();
       this.scrollToBottom();
     }
   }
+
   // ==========================================
-  // ✅ NEW: Stop generation (cancel request)
+  // ✅ Stop generation (cancel request)
   // ==========================================
   stopGeneration(openEditLast: boolean = true) {
     this.inflightChatSub?.unsubscribe();
@@ -409,7 +422,6 @@ export class Chatbox implements OnInit, OnDestroy {
 
     this.sending = false;
 
-    // ✅ only auto-open edit if not already editing
     if (openEditLast && this.editingIndex === null) {
       const idx = this.findLastUserIndex();
       if (idx !== null) this.startEditUserMessage(idx);
@@ -419,7 +431,7 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // ✅ NEW: Edit + Copy helpers
+  // ✅ Edit + Copy helpers
   // ==========================================
   startEditUserMessage(index: number) {
     if (this.editingIndex !== null && this.editingIndex !== index) return;
@@ -443,19 +455,16 @@ export class Chatbox implements OnInit, OnDestroy {
 
     this.cdr.detectChanges();
   }
+
   saveEditAndResend() {
     if (this.editingIndex === null) return;
 
     const newText = this.editingText.trim();
     if (!newText) return;
 
-    // ✅ update bubble
     this.messages[this.editingIndex].text = newText;
-
-    // ✅ remove old AI messages after edited point
     this.messages = this.messages.slice(0, this.editingIndex + 1);
 
-    // ✅ exit edit mode
     this.editingIndex = null;
     this.editingText = '';
     this.originalEditText = '';
@@ -463,12 +472,10 @@ export class Chatbox implements OnInit, OnDestroy {
     this.cdr.detectChanges();
     this.scrollToBottom();
 
-    // ✅ regenerate AI response (same behavior as before)
     this.startBotResponseForEditedMessage(newText);
   }
 
   private async startBotResponseForEditedMessage(text: string) {
-    // behaves like normal send but without pushing a new user bubble (already edited)
     if (this.sending) return;
 
     this.sending = true;
@@ -511,7 +518,6 @@ export class Chatbox implements OnInit, OnDestroy {
       return;
     }
 
-    // save edited resend as a new turn
     if (canSave) {
       try {
         this.activeConversationId = this.normalizeId(this.activeConversationId);
@@ -531,7 +537,7 @@ export class Chatbox implements OnInit, OnDestroy {
           this.activeConversationId = this.normalizeId(convoId);
 
           if (this.activeConversationId) {
-            localStorage.setItem('activeConversationId', this.activeConversationId);
+            sessionStorage.setItem(this.SS_ACTIVE_CONVO, this.activeConversationId);
           }
 
           this.loadConversations();
@@ -594,19 +600,21 @@ export class Chatbox implements OnInit, OnDestroy {
     );
   }
 
- async onDeleteChat(conversationId: string) {
+async onDeleteChat(conversationId: string) {
   const id = this.normalizeId(conversationId);
   if (!id) return;
 
-  // ✅ NO confirm here (Sidebar already confirms)
   try {
     await firstValueFrom(this.convoApi.deleteConversation(id).pipe(timeout(120000)));
 
+    // remove from sidebar list
     this.chats = this.chats.filter((c) => c.id !== id);
 
+    // if currently open chat is deleted, reset UI
     if (this.activeConversationId === id) {
       this.activeConversationId = null;
-      localStorage.removeItem('activeConversationId');
+      sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
+
       this.messages = [];
       this.message = '';
       this.sending = false;
@@ -614,7 +622,6 @@ export class Chatbox implements OnInit, OnDestroy {
 
     this.cdr.detectChanges();
 
-    // ✅ success modal (auto close 3s)
     await this.uiModal.notify({
       title: 'Deleted',
       message: 'Chat deleted successfully.',
@@ -624,9 +631,19 @@ export class Chatbox implements OnInit, OnDestroy {
     });
   } catch (e) {
     console.error('Delete failed', e);
+
+    // still reset UI if it was the active one (optional but safe)
+    if (this.activeConversationId === id) {
+      this.activeConversationId = null;
+      sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
+
+      this.messages = [];
+      this.message = '';
+      this.sending = false;
+    }
+
     this.cdr.detectChanges();
 
-    // ✅ error modal
     await this.uiModal.notify({
       title: 'Delete failed',
       message: 'Failed to delete conversation in database.',
@@ -830,18 +847,21 @@ export class Chatbox implements OnInit, OnDestroy {
     }
   }
 
-  async onArchiveChat(conversationId: string) {
+async onArchiveChat(conversationId: string) {
   const id = this.normalizeId(conversationId);
   if (!id) return;
 
   try {
     await firstValueFrom(this.convoApi.archiveConversation(id).pipe(timeout(120000)));
 
+    // remove from sidebar list (archived chats should disappear)
     this.chats = this.chats.filter((c) => c.id !== id);
 
+    // if currently open chat is archived, reset UI
     if (this.activeConversationId === id) {
       this.activeConversationId = null;
-      localStorage.removeItem('activeConversationId');
+      sessionStorage.removeItem(this.SS_ACTIVE_CONVO);
+
       this.messages = [];
       this.message = '';
       this.sending = false;
@@ -1089,52 +1109,52 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   toggleVoice() {
-  const SpeechRecognition =
-    (window as any).SpeechRecognition ||
-    (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    alert('Speech recognition is not supported in this browser.');
-    return;
-  }
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
+    }
 
-  if (!this.recognition) {
-    this.recognition = new SpeechRecognition();
-    this.recognition.lang = 'en-US';
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
+    if (!this.recognition) {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'en-US';
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
 
-    this.recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      this.message = transcript; // ✅ put into input
-      this.cdr.detectChanges();
-    };
+      this.recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.message = transcript;
+        this.cdr.detectChanges();
+      };
 
-    this.recognition.onend = () => {
+      this.recognition.onend = () => {
+        this.listening = false;
+        this.cdr.detectChanges();
+      };
+
+      this.recognition.onerror = () => {
+        this.listening = false;
+        this.cdr.detectChanges();
+      };
+    }
+
+    if (!this.listening) {
+      this.recognition.start();
+      this.listening = true;
+    } else {
+      this.recognition.stop();
       this.listening = false;
-      this.cdr.detectChanges();
-    };
+    }
 
-    this.recognition.onerror = () => {
-      this.listening = false;
-      this.cdr.detectChanges();
-    };
+    this.cdr.detectChanges();
   }
 
-  if (!this.listening) {
-    this.recognition.start();
-    this.listening = true;
-  } else {
-    this.recognition.stop();
-    this.listening = false;
-  }
-
-  this.cdr.detectChanges();
-}
   reloadConversations() {
-  if (this.isLoggedIn && this.userId) {
-    this.loadConversations();
+    if (this.isLoggedIn && this.userId) {
+      this.loadConversations();
+    }
   }
-}
-
 }

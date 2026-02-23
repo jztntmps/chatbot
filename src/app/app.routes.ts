@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { IndexLogin } from './indexlogin/indexlogin';
+import { authGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
   {
@@ -12,18 +12,24 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./indexlogin/indexlogin').then(m => m.IndexLogin),
   },
+
+  // ✅ PROTECTED
   {
     path: 'chatbox',
     loadComponent: () =>
       import('./layout/component/chatbox/chatbox').then(m => m.Chatbox),
   },
+
   {
     path: 'signup',
     loadComponent: () =>
       import('./signup/signup').then(m => m.Signup),
   },
+
+  // ✅ PROTECTED (optional but recommended)
   {
     path: 'preview-archive',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./layout/component/preview-archive/preview-archive').then(m => m.PreviewArchive),
   },
