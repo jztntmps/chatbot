@@ -101,12 +101,3 @@
 
   </div>
 </main>
-
-<!-- Error Modal -->
-<div class="modal" *ngIf="showErrorModal">
-  <div class="modal__backdrop" (click)="closeErrorModal()"></div>
-  <div class="modal__card" role="alertdialog" aria-live="assertive">
-    <p class="modal__text">{{ errorModalMessage }}</p>
-    <button class="modal__btn" type="button" (click)="closeErrorModal()">Close</button>
-  </div>
-</div>
