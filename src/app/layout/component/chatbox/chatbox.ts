@@ -318,12 +318,16 @@ export class Chatbox implements OnInit, OnDestroy {
         this.inflightChatSub?.unsubscribe();
 
         this.inflightChatSub = this.http
-          .post<{ reply: string }>(this.API_URL, { message: text })
-          .pipe(timeout(120000))
-          .subscribe({
-            next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
-            error: (err) => reject(err),
-          });
+        .post<{ reply: string }>(this.API_URL, {
+          message: text,
+          userId: this.isLoggedIn ? this.userId : null,
+          conversationId: this.isLoggedIn ? this.activeConversationId : null,
+        })
+        .pipe(timeout(120000))
+        .subscribe({
+          next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
+          error: (err) => reject(err),
+        });
       });
 
       // ✅ if stopped or a newer request started, ignore
