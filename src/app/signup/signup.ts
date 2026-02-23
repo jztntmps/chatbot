@@ -47,11 +47,14 @@ export class Signup {
       password
     };
 
-    this.http.post('http://localhost:8080/api/auth/signup', userData)
+    this.http.post<any>('http://localhost:8080/api/auth/signup', userData)
       .subscribe({
-        next: () => {
-          alert('Signup successful!');
-          this.router.navigate(['/login']);
+        next: (res) => {
+          const userId = res?.userId || res?.id || res?._id || '';
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userEmail', res?.email || email);
+          if (userId) localStorage.setItem('userId', userId);
+          this.router.navigate(['/chatbox']);
         },
         error: (err) => {
           console.error(err);
