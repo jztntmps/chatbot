@@ -1,103 +1,91 @@
 <main class="login">
-  <div class="login__container">
-    <img src="/assets/previous.png" alt="Back" class="login__back-icon" (click)="goHome()" />
+  <section class="login__card">
+    <button type="button" class="login__back" (click)="goHome()" aria-label="Back">
+      <img src="/assets/previous.png" alt="" />
+    </button>
 
-    <!-- LEFT SIDE -->
-    <div class="login__left">
-      <div class="robot">
-        <img
-          src="/assets/mini_bot.png"
-          alt="Mini Bot"
-          class="robot__body"
-        />
-        <img
-          src="/assets/mini_arm.png"
-          alt="Mini Arm"
-          class="robot__right"
-        />
+    <div class="login__inner">
+      <!-- LEFT SIDE -->
+      <div class="login__left" aria-hidden="true">
+        <div class="robot">
+          <img src="/assets/mini_bot.png" alt="Mini Bot" class="robot__body" />
+          <img src="/assets/mini_arm.png" alt="Mini Arm" class="robot__right" />
+        </div>
       </div>
-    </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="login__right">
-      <img src="/assets/profile.png" alt="Profile" class="login__profile-icon" />
-      <h1 class="login__title">Welcome!</h1>
+      <!-- RIGHT SIDE -->
+      <div class="login__right">
+        <img src="/assets/profile.png" alt="Profile" class="login__profile-icon" />
+        <h1 class="login__title">Welcome!</h1>
 
-      <div class="login__form-card">
         <form class="login__form" (ngSubmit)="login()" autocomplete="off">
+          <!-- EMAIL -->
+          <label class="field">
+            <span class="field__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6" />
+                <path d="M4 6.5 12 12l8-5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
 
-        <!-- EMAIL -->
-        <div class="field">
-          <span class="field__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6" />
-              <path d="M4 6.5 12 12l8-5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
+            <input
+              #emailInput
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              (ngModelChange)="clearError()"
+              placeholder="Email"
+              class="field__input"
+              required
+            />
+          </label>
 
-          <input
-            type="email"
-            name="email"
-            [(ngModel)]="email"
-            (ngModelChange)="clearError()"
-            placeholder="Email"
-            class="field__input"
-            required
-          />
-        </div>
+          <!-- PASSWORD -->
+          <label class="field field--password">
+            <span class="field__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 14v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                <circle cx="12" cy="13.2" r="0.6" fill="currentColor"/>
+              </svg>
+            </span>
 
-        <!-- PASSWORD -->
-        <div class="field">
-          <span class="field__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/>
-              <path d="M8 10V7a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M12 14v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              <circle cx="12" cy="13.2" r="0.6" fill="currentColor"/>
-            </svg>
-          </span>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              (ngModelChange)="clearError()"
+              placeholder="Password"
+              class="field__input"
+              required
+            />
 
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            name="password"
-            [(ngModel)]="password"
-            (ngModelChange)="clearError()"
-            placeholder="Password"
-            class="field__input"
-            required
-          />
+            <button type="button" class="field__eye" (click)="togglePassword()" aria-label="Toggle password visibility">
+              <ng-container *ngIf="showPassword; else eyeClosed">
+                <img src="/assets/visible.png" alt="" width="18" height="18" />
+              </ng-container>
+              <ng-template #eyeClosed>
+                <img src="/assets/eye.png" alt="" width="18" height="18" />
+              </ng-template>
+            </button>
+          </label>
 
-        <button
-          type="button"
-          class="field__eye"
-          (click)="togglePassword()"
-        >
-            <ng-container *ngIf="showPassword; else eyeClosed">
-              <img src="/assets/visible.png" alt="Hide password" width="18" height="18" />
-            </ng-container>
-            <ng-template #eyeClosed>
-              <img src="/assets/eye.png" alt="Show password" width="18" height="18" />
-            </ng-template>
-        </button>
-        </div>
+          <!-- ERROR -->
+          <p class="login__error" *ngIf="errorMsg">{{ errorMsg }}</p>
 
-        <!-- ERROR MESSAGE -->
-        <p class="login__error" *ngIf="errorMsg">
-          {{ errorMsg }}
-        </p>
+          <div class="actions">
+            <button type="submit" class="btn btn--primary" [disabled]="loading">
+              {{ loading ? 'Logging in...' : 'Login' }}
+            </button>
+          </div>
 
-        <button type="submit" class="btn btn--signup" [disabled]="loading">
-          {{ loading ? 'Logging in...' : 'Login' }}
-        </button>
-
-        <p class="login__signup">
-          Don’t have an account?
-          <a routerLink="/signup">Sign Up</a>
-        </p>
-
+          <p class="login__signup">
+            Don’t have an account?
+            <a routerLink="/signup">Sign Up</a>
+          </p>
         </form>
       </div>
     </div>
-
-  </div>
+  </section>
 </main>

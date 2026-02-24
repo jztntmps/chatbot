@@ -1,8 +1,18 @@
-import { Component } from '@angular/core';
+import {
+  Component,
+  inject,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+
+import { finalize } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-indexlogin',
@@ -12,6 +22,13 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./indexlogin.scss'],
 })
 export class IndexLogin {
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
+
+  @ViewChild('emailInput') emailInput?: ElementRef<HTMLInputElement>;
+
   email = '';
   password = '';
   showPassword = false;
@@ -19,8 +36,6 @@ export class IndexLogin {
   loading = false;
 
   private apiUrl = 'http://localhost:8080/api/auth/login';
-
-  constructor(private http: HttpClient, private router: Router) {}
 
   togglePassword() {
     this.showPassword = !this.showPassword;
@@ -31,13 +46,20 @@ export class IndexLogin {
   }
 
   clearError() {
+    // ✅ if user starts typing again, remove message
     if (this.errorMsg) this.errorMsg = '';
   }
 
   login() {
+    // ✅ prevent double submit habang loading
+    if (this.loading) return;
+
     this.errorMsg = '';
 
-    if (!this.email || !this.password) {
+    const email = (this.email || '').trim();
+    const password = this.password || '';
+
+    if (!email || !password) {
       this.errorMsg = 'Email and password are required';
       return;
     }
@@ -45,28 +67,40 @@ export class IndexLogin {
     this.loading = true;
 
     this.http
-      .post<any>(this.apiUrl, { email: this.email.trim(), password: this.password })
+      .post<any>(this.apiUrl, { email, password })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+
+        // ✅ ALWAYS reset loading (success OR error OR throw)
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges(); // helps if UI gets “stuck”
+        })
+      )
       .subscribe({
         next: (res) => {
           const userId = res?.userId || res?.id || res?._id;
 
           if (!userId) {
             this.errorMsg = 'Login succeeded but userId was not returned by backend.';
-            this.loading = false;
             return;
           }
 
-          // ✅ sessionStorage so closing tab logs out
           sessionStorage.setItem('isLoggedIn', 'true');
-          sessionStorage.setItem('userEmail', res?.email || this.email.trim());
+          sessionStorage.setItem('userEmail', res?.email || email);
           sessionStorage.setItem('userId', userId);
 
           this.router.navigate(['/chatbox']);
-          this.loading = false;
         },
-        error: (err) => {
-          this.errorMsg = err?.error?.message || 'Invalid email or password';
-          this.loading = false;
+        error: (err: HttpErrorResponse) => {
+          // ✅ handle backend status codes
+          if (err?.status === 409) {
+            this.errorMsg = 'Invalid email or password';
+          } else if (err?.status === 401) {
+            this.errorMsg = 'Invalid email or password';
+          } else {
+            this.errorMsg = err?.error?.message || 'Login failed. Please try again.';
+          }
         },
       });
   }
