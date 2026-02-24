@@ -5,12 +5,10 @@
     </button>
 
     <div class="signup__inner">
-      <!-- LEFT: FORM -->
       <div class="signup__form-wrap">
         <h2 class="signup__title">Sign Up</h2>
 
         <form class="signup__form" [formGroup]="form" (ngSubmit)="onSubmit()">
-          <!-- USERNAME -->
           <label class="field">
             <span class="field__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -39,7 +37,6 @@
             </ng-container>
           </p>
 
-          <!-- EMAIL -->
           <label class="field">
             <span class="field__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -60,15 +57,17 @@
 
           <p class="err" *ngIf="(f.email.touched || f.email.dirty) && f.email.invalid">
             <ng-container *ngIf="f.email.errors?.['required']">Email is required.</ng-container>
-            <ng-container *ngIf="!f.email.errors?.['required'] && f.email.errors?.['email']">
-              Please enter a valid email address.
+            <ng-container *ngIf="!f.email.errors?.['required'] && f.email.errors?.['emailFormat']">
+              Please enter a valid email (example: name@gmail.com).
             </ng-container>
-            <ng-container *ngIf="!f.email.errors?.['required'] && !f.email.errors?.['email'] && f.email.errors?.['backendTaken']">
+            <ng-container *ngIf="!f.email.errors?.['required'] && f.email.errors?.['emailDomainNotAllowed']">
+              Allowed domains: .com, .net, .org, .edu, .gov, .io, .co, .ph (and .com.ph etc).
+            </ng-container>
+            <ng-container *ngIf="!f.email.errors?.['required'] && !f.email.errors?.['emailFormat'] && !f.email.errors?.['emailDomainNotAllowed'] && f.email.errors?.['backendTaken']">
               {{ emailError || 'Email already exists.' }}
             </ng-container>
           </p>
 
-          <!-- PASSWORD -->
           <label class="field">
             <span class="field__icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -93,7 +92,6 @@
             Password is not strong enough.
           </p>
 
-          <!-- CONFIRM -->
           <label class="field">
             <span class="field__icon" aria-hidden="true">
               <svg width="16" height="18" viewBox="0 0 24 24" fill="none">
@@ -126,7 +124,6 @@
         </form>
       </div>
 
-      <!-- RIGHT: IMAGE -->
       <div class="signup__illustration" aria-hidden="true">
         <img src="/assets/signup-bot.png" alt="bot" />
       </div>
