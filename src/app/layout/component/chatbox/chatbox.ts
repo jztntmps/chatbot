@@ -278,10 +278,10 @@ export class Chatbox implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // ✅ UPDATED: sendMessage now supports cancel
+  // ✅ FIXED: sendMessage (guest memory + cancel + no duplicate push)
   // ==========================================
   async sendMessage() {
-    const text = this.message.trim();
+    const text = (this.message ?? '').trim();
     if (!text || this.sending) return;
 
     const canSave = this.isLoggedIn && !!this.userId;
@@ -289,8 +289,11 @@ export class Chatbox implements OnInit, OnDestroy {
     // ✅ unique token per request
     const myToken = ++this.requestToken;
 
-    // ✅ snapshot current conversation id at send time
+    // ✅ snapshot convo id at send time (normalized)
     const convoAtSend = this.normalizeId(this.activeConversationId);
+
+    // ✅ build history BEFORE adding this new message (guest only)
+    const history = !this.isLoggedIn ? this.buildHistory(10) : null;
 
     if (!canSave && !this.warnedNoSave) {
       this.warnedNoSave = true;
@@ -300,7 +303,7 @@ export class Chatbox implements OnInit, OnDestroy {
       });
     }
 
-    // push user msg
+    // ✅ push user msg ONCE
     this.messages.push({ role: 'user', text });
 
     // clear input but user can type again
@@ -318,16 +321,17 @@ export class Chatbox implements OnInit, OnDestroy {
         this.inflightChatSub?.unsubscribe();
 
         this.inflightChatSub = this.http
-        .post<{ reply: string }>(this.API_URL, {
-          message: text,
-          userId: this.isLoggedIn ? this.userId : null,
-          conversationId: this.isLoggedIn ? this.activeConversationId : null,
-        })
-        .pipe(timeout(120000))
-        .subscribe({
-          next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
-          error: (err) => reject(err),
-        });
+          .post<{ reply: string }>(this.API_URL, {
+            message: text,
+            userId: this.isLoggedIn ? this.userId : null,
+            conversationId: this.isLoggedIn ? convoAtSend : null,
+            history, // ✅ guest memory (null when logged in)
+          })
+          .pipe(timeout(120000))
+          .subscribe({
+            next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
+            error: (err) => reject(err),
+          });
       });
 
       // ✅ if stopped or a newer request started, ignore
@@ -344,7 +348,6 @@ export class Chatbox implements OnInit, OnDestroy {
     } catch (e) {
       if (!this.sending || myToken !== this.requestToken) return;
 
-      // if user switched conversation, ignore the error bubble too
       if (this.normalizeId(this.activeConversationId) !== convoAtSend) {
         this.sending = false;
         this.cdr.detectChanges();
@@ -364,13 +367,12 @@ export class Chatbox implements OnInit, OnDestroy {
     }
 
     // =========================
-    // 2) SAVE (DB) request
+    // 2) SAVE (DB) request (logged in only)
     // =========================
     if (canSave) {
       try {
         if (myToken !== this.requestToken) throw new Error('stale request');
-        if (this.normalizeId(this.activeConversationId) !== convoAtSend)
-          throw new Error('switched chat');
+        if (this.normalizeId(this.activeConversationId) !== convoAtSend) throw new Error('switched chat');
 
         let convoId = this.normalizeId(this.activeConversationId);
 
@@ -390,9 +392,7 @@ export class Chatbox implements OnInit, OnDestroy {
           if (myToken === this.requestToken && this.normalizeId(this.activeConversationId) === convoAtSend) {
             this.activeConversationId = convoId;
 
-            // ✅ store active convo only for logged in
             if (convoId) sessionStorage.setItem(this.SS_ACTIVE_CONVO, convoId);
-
             this.loadConversations();
           }
         } else {
@@ -416,7 +416,6 @@ export class Chatbox implements OnInit, OnDestroy {
       this.scrollToBottom();
     }
   }
-
   // ==========================================
   // ✅ Stop generation (cancel request)
   // ==========================================
@@ -482,6 +481,15 @@ export class Chatbox implements OnInit, OnDestroy {
   private async startBotResponseForEditedMessage(text: string) {
     if (this.sending) return;
 
+    const trimmed = (text ?? '').trim();
+    if (!trimmed) return;
+
+    // ✅ unique token per request
+    const myToken = ++this.requestToken;
+
+    // ✅ snapshot convo id at send time (normalized)
+    const convoAtSend = this.normalizeId(this.activeConversationId);
+
     this.sending = true;
     this.scrollToBottom();
     this.cdr.detectChanges();
@@ -493,8 +501,15 @@ export class Chatbox implements OnInit, OnDestroy {
       reply = await new Promise<string>((resolve, reject) => {
         this.inflightChatSub?.unsubscribe();
 
+        const history = !this.isLoggedIn ? this.buildHistory(10) : null;
+
         this.inflightChatSub = this.http
-          .post<{ reply: string }>(this.API_URL, { message: text })
+          .post<{ reply: string }>(this.API_URL, {
+            message: trimmed,
+            userId: this.isLoggedIn ? this.userId : null,
+            conversationId: this.isLoggedIn ? convoAtSend : null,
+            history: !this.isLoggedIn ? history : null,
+          })
           .pipe(timeout(120000))
           .subscribe({
             next: (res) => resolve((res?.reply ?? '').trim() || '(Empty reply)'),
@@ -502,54 +517,70 @@ export class Chatbox implements OnInit, OnDestroy {
           });
       });
 
-      if (!this.sending) return;
+      // ✅ if stopped or a newer request started, ignore
+      if (!this.sending || myToken !== this.requestToken) return;
+
+      // ✅ if user switched conversations while waiting, ignore
+      if (this.normalizeId(this.activeConversationId) !== convoAtSend) {
+        this.sending = false;
+        this.cdr.detectChanges();
+        return;
+      }
 
       this.messages.push({ role: 'ai', text: reply });
     } catch (e) {
-      if (!this.sending) return;
+      if (!this.sending || myToken !== this.requestToken) return;
+
+      // ignore error bubble if user switched chats
+      if (this.normalizeId(this.activeConversationId) !== convoAtSend) {
+        this.sending = false;
+        this.cdr.detectChanges();
+        return;
+      }
 
       const err = e as any;
       let msg = '⚠️ Request failed.';
       if (err?.name === 'TimeoutError') msg = '⚠️ Timed out. Server took too long.';
-      if (err instanceof HttpErrorResponse) {
-        msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
-      }
-      this.messages.push({ role: 'ai', text: msg });
+      if (err instanceof HttpErrorResponse) msg = `⚠️ HTTP ${err.status}: ${err.statusText}`;
 
+      this.messages.push({ role: 'ai', text: msg });
       this.sending = false;
       this.cdr.detectChanges();
       this.scrollToBottom();
       return;
     }
 
+    // =========================
+    // 2) SAVE (DB) request
+    // =========================
     if (canSave) {
       try {
-        this.activeConversationId = this.normalizeId(this.activeConversationId);
+        if (myToken !== this.requestToken) throw new Error('stale request');
+        if (this.normalizeId(this.activeConversationId) !== convoAtSend) throw new Error('switched chat');
 
-        if (!this.activeConversationId) {
+        let convoId = this.normalizeId(this.activeConversationId);
+
+        if (!convoId) {
           const created = await firstValueFrom(
             this.convoApi
               .createConversation({
                 userId: this.userId,
-                firstUserMessage: text,
+                firstUserMessage: trimmed,
                 firstBotResponse: reply,
               })
               .pipe(timeout(120000))
           );
 
-          const convoId = this.extractConversationId(created);
-          this.activeConversationId = this.normalizeId(convoId);
+          convoId = this.normalizeId(this.extractConversationId(created));
+          this.activeConversationId = convoId;
 
-          if (this.activeConversationId) {
-            sessionStorage.setItem(this.SS_ACTIVE_CONVO, this.activeConversationId);
-          }
-
+          if (convoId) sessionStorage.setItem(this.SS_ACTIVE_CONVO, convoId);
           this.loadConversations();
         } else {
           await firstValueFrom(
             this.convoApi
-              .addTurn(this.activeConversationId, {
-                userMessage: text,
+              .addTurn(convoId, {
+                userMessage: trimmed,
                 botResponse: reply,
               })
               .pipe(timeout(120000))
@@ -560,9 +591,11 @@ export class Chatbox implements OnInit, OnDestroy {
       }
     }
 
-    this.sending = false;
-    this.cdr.detectChanges();
-    this.scrollToBottom();
+    if (myToken === this.requestToken) {
+      this.sending = false;
+      this.cdr.detectChanges();
+      this.scrollToBottom();
+    }
   }
 
   async copyText(text: string) {
@@ -1160,5 +1193,15 @@ async onArchiveChat(conversationId: string) {
     if (this.isLoggedIn && this.userId) {
       this.loadConversations();
     }
+  }
+
+  private buildHistory(maxTurns: number = 10) {
+    return this.messages
+      .slice(-maxTurns * 2)
+      .filter(m => m?.text?.trim())
+      .map(m => ({
+        role: m.role === 'ai' ? 'assistant' : 'user', // 🔥 CRITICAL
+        content: m.text
+      }));
   }
 }
