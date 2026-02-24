@@ -1,23 +1,17 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { PreviewArchive } from './preview-archive';
 
 describe('PreviewArchive', () => {
-  let component: PreviewArchive;
-  let fixture: ComponentFixture<PreviewArchive>;
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PreviewArchive]
-    })
-    .compileComponents();
-
-    fixture = TestBed.createComponent(PreviewArchive);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
+      imports: [PreviewArchive],
+      providers: [provideRouter([])],
+    }).compileComponents();
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    const fixture = TestBed.createComponent(PreviewArchive);
+    expect(fixture.componentInstance).toBeTruthy();
   });
 });
