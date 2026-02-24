@@ -1,87 +1,76 @@
-/* =========================
-   PAGE
-========================= */
+/* ============================= */
+/* GLOBAL (NO SCROLLBAR) */
+/* ============================= */
+
 :host {
   display: block;
-  min-height: 100dvh;
+  min-height: 100vh;
   background: url('/assets/white.avif') center/cover no-repeat;
 }
 
 .login {
-  min-height: 100dvh;
+  min-height: 100vh;
   display: grid;
-
-  /* ✅ same style as signup: slightly higher than center */
-  align-items: start;
-  justify-items: center;
-  padding: clamp(18px, 3vw, 40px) clamp(14px, 3vw, 24px);
-  padding-top: clamp(60px, 10vh, 90px);
+  place-items: center;
+  padding: 32px 16px;
 }
 
-/* =========================
-   CARD
-========================= */
-.login__card {
-  width: min(1000px, 100%);
-  background: #fff;
+.login__container {
+  width: min(960px, calc(100% - 32px));
+  max-width: none;
+
+  /* ✅ keep desktop design (2 columns) */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 24px;
+
+  background: #ffffff;
   border-radius: 18px;
-  padding: clamp(20px, 3vw, 34px);
+  padding: 24px;
   box-shadow:
     0 20px 50px rgba(17, 24, 39, 0.16),
     0 4px 12px rgba(17, 24, 39, 0.08);
   border: 1px solid rgba(17, 24, 39, 0.06);
+
+  /* ✅ desktop look stays */
+  min-height: clamp(420px, 55vh, 520px);
+  transform: translateY(-20px);
+
   position: relative;
 
-  /* ✅ not fixed height */
-  min-height: clamp(420px, 55vh, 520px);
+  /* ✅ prevents ugly overflow when content grows (small screens) */
+  overflow: visible;
 }
 
-/* back button */
-.login__back {
+/* Back icon */
+.login__back-icon {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: transparent;
-  padding: 0;
+  top: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
   cursor: pointer;
-  display: grid;
-  place-items: center;
-
-  img {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    display: block;
-  }
 }
 
-/* =========================
-   2 COLUMN LAYOUT
-========================= */
-.login__inner {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(20px, 4vw, 64px);
-  align-items: center;
-  justify-items: center;
-}
+/* ============================= */
+/* LEFT SIDE (ROBOT) */
+/* ============================= */
 
-/* =========================
-   LEFT (ROBOT)
-========================= */
 .login__left {
-  width: 100%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* ✅ RESPONSIVE MINI ROBOT (auto adjust per device) */
 .robot {
   position: relative;
-  width: min(320px, 100%);
+
+  /* 🔥 Scales smoothly depending on screen size */
+  width: clamp(180px, 28vw, 320px);
+  max-width: 100%;
 }
 
 .robot__body {
@@ -95,9 +84,12 @@
   z-index: 3;
   pointer-events: none;
 
-  width: 64%;
-  right: -18%;
-  top: 34%;
+  /* 🔥 Arm scales too */
+  width: clamp(110px, 18vw, 200px);
+
+  /* use percent so it follows robot size */
+  right: -22%;
+  top: 35%;
 
   transform-origin: 18% 22%;
   transform-style: preserve-3d;
@@ -107,87 +99,119 @@
 }
 
 @keyframes waveLeftRight {
-  0%, 20% { transform: rotate(0deg) rotateY(20deg) translateX(0); }
-  30% { transform: rotate(0deg) rotateY(30deg) translateX(0); }
-  40% { transform: rotate(0deg) rotateY(30deg) translateX(0); }
-  50% { transform: rotate(0deg) rotateY(30deg) translateX(0); }
-  60% { transform: rotate(0deg) rotateY(30deg) translateX(0); }
-  80%, 100% { transform: rotate(0deg) rotateY(10deg) translateX(0); }
+  0%,
+  20% {
+    transform: rotate(0deg) rotateY(20deg) translateX(0);
+  }
+  30% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  40% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  50% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  60% {
+    transform: rotate(0deg) rotateY(30deg) translateX(0px);
+  }
+  80%,
+  100% {
+    transform: rotate(0deg) rotateY(10deg) translateX(0);
+  }
 }
 
-/* =========================
-   RIGHT (FORM)
-========================= */
+/* ============================= */
+/* RIGHT SIDE (FORM) */
+/* ============================= */
+
 .login__right {
-  width: 100%;
-  max-width: 440px;
-  display: grid;
-  justify-items: center;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+
+  /* ✅ avoid shrinking issues */
+  min-width: 0;
 }
 
 .login__profile-icon {
-  width: 86px;
-  height: 86px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
+  margin-bottom: -75px;
+
+  /* desktop positioning */
+  margin-left: -150px;
 }
 
 .login__title {
-  margin: 0;
-  font-size: clamp(22px, 3vw, 36px);
+  font-size: 36px;
   font-weight: 800;
-  color: #111;
+  margin-bottom: -10px;
+  width: 100%;
   text-align: center;
+  color: #111;
+
+  /* desktop positioning */
+  margin-left: -150px;
 }
 
-/* =========================
-   FORM
-========================= */
+.login__form-card {
+  width: 100%;
+  max-width: 420px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+
+  /* desktop positioning */
+  margin-left: -150px;
+}
+
+/* FORM */
 .login__form {
   width: 100%;
-  display: grid;
-  gap: 12px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* same alignment as signup */
+/* INPUT LINE STYLE */
 .field {
-  display: grid;
-  grid-template-columns: 28px 1fr;
+  display: flex;
   align-items: center;
-  column-gap: 14px;
+  gap: 10px;
   position: relative;
+  border-bottom: none;
+  padding: 10px 0;
 }
 
 .field__icon {
   color: #3d5a80;
-  display: grid;
-  place-items: center;
-
-  svg {
-    width: 18px;
-    height: 18px;
-    display: block;
-  }
+  display: flex;
+  align-items: center;
 }
 
 .field__input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
   background: transparent;
   border: 0;
   border-bottom: 2px solid rgba(0, 0, 0, 0.2);
-  padding: 12px 6px 12px 0;
-  padding-right: 40px; /* room for eye icon */
-  font-size: 14px;
+  padding: 6px 8px 6px 0;
+  padding-right: 36px;
+  font-size: 13px;
   width: 100%;
   outline: none;
   color: #222;
 
-  &:focus {
-    border-bottom-color: #7bb3eb;
-  }
+  /* ✅ helps on small screens (long email) */
+  min-width: 0;
 }
 
-/* eye button */
 .field__eye {
   position: absolute;
   right: 0;
@@ -195,119 +219,150 @@
   border: none;
   background: transparent;
   cursor: pointer;
+  color: #444;
   padding: 4px;
-  display: grid;
-  place-items: center;
 }
 
-/* error */
+/* LOGIN BUTTON */
+.btn {
+  width: 200px;
+  height: 34px;
+  border: none;
+  border-radius: 50px;
+  color: rgb(255, 255, 255);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition-duration: 0.3s;
+  box-shadow:
+    inset 0 3px 6px rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.28);
+  margin: 0 auto;
+}
+
+.btn--signup {
+  background-color: #7bb3eb;
+  box-shadow: 1px 3px 0px #5a8fd4;
+}
+
+.btn--signup:active {
+  transform: translate(2px, 0px);
+  box-shadow: 0px 1px 0px rgb(139, 113, 255);
+  padding-bottom: 1px;
+}
+
+/* SIGNUP TEXT */
+.login__signup {
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+  color: #111;
+  margin-top: 20px;
+}
+
 .login__error {
-  margin: 4px 0 0;
   font-size: 13px;
   color: #b42318;
   font-weight: 600;
+  margin: 6px 0 0;
   text-align: center;
 }
 
-/* button */
-.actions {
-  margin-top: 6px;
-  display: flex;
-  justify-content: center;
+.login__signup a {
+  color: #3b5bdb;
+  font-weight: 600;
+  margin-left: 6px;
+  text-decoration: none;
 }
 
-.btn {
-  width: min(260px, 100%);
-  height: 42px;
-  border: none;
-  border-radius: 999px;
-  color: #fff;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+.login__signup a:hover {
+  text-decoration: underline;
 }
 
-.btn--primary {
-  background-color: #7bb3eb;
-  box-shadow:
-    inset 0 3px 6px rgba(255, 255, 255, 0.35),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.28),
-    1px 3px 0px #5a8fd4;
-}
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
 
-.btn--primary:active {
-  transform: translateY(1px);
-}
-
-.btn[disabled] {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* signup link */
-.login__signup {
-  margin: 8px 0 0;
-  font-size: 13px;
-  text-align: center;
-  color: #111;
-
-  a {
-    color: #3b5bdb;
-    font-weight: 700;
-    margin-left: 6px;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
-/* =========================
-   RESPONSIVE BREAKPOINTS
-========================= */
+/* ✅ Tablet + smaller: switch to 1 column, keep same design elements */
 @media (max-width: 900px) {
-  .login__inner {
+  :host {
+    overflow: auto;
+  }
+
+  .login {
+    padding: 28px 18px;
+  }
+
+  .login__container {
     grid-template-columns: 1fr;
-    gap: 20px;
+    height: auto; /* ✅ remove fixed height so it won’t cut */
+    margin-top: 0; /* ✅ avoid pushing card out of screen */
+    gap: 18px;
+    padding: 22px;
   }
 
   .login__left {
-    order: -1; /* robot on top */
+    justify-content: center;
   }
 
-  .robot {
-    width: min(260px, 100%);
+  /* ✅ on smaller screens, remove the -150px offsets so it centers */
+  .login__profile-icon,
+  .login__title,
+  .login__form-card {
+    margin-left: 0;
   }
 
-  .login__card {
-    min-height: auto; /* allow natural height */
+  .login__title {
+    text-align: center;
+  }
+
+  .login__form {
+    width: 100%;
+    max-width: 420px;
   }
 }
 
+/* ✅ Phone: tighten spacing but keep same look */
 @media (max-width: 520px) {
-  .login__card {
-    border-radius: 14px;
-    padding: 18px;
+  .login {
+    padding: 20px 14px;
   }
 
-  .field__input {
-    font-size: 13px;
-    padding: 10px 6px 10px 0;
-    padding-right: 40px;
+  .login__container {
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  /* keep your sizes, just prevent overflow */
+  .login__title {
+    font-size: 32px;
   }
 
   .btn {
-    height: 44px;
+    width: 100%;
+    max-width: 260px;
   }
 }
 
-/* optional: hide robot on super small screens */
-@media (max-width: 380px) {
+/* ✅ Very small phones: hide robot to save space */
+@media (max-width: 420px) {
   .login__left {
     display: none;
+  }
+
+  /* ✅ keep card centered + full width */
+  .login__container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ✅ Extra tiny phones */
+@media (max-width: 380px) {
+  .login__title {
+    font-size: 28px;
   }
 }

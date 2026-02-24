@@ -23,7 +23,7 @@
   border: 1px solid rgba(17, 24, 39, 0.06);
   position: relative;
 
-  min-height: clamp(420px, 55vh, 520px);
+  min-height: clamp(420px, 55vh, 540px);
   transform: translateY(-20px);
 
   display: flex;
@@ -77,8 +77,10 @@
   place-items: center;
 }
 
+/* ✅ RESPONSIVE IMAGE (same approach as login) */
 .signup__illustration img {
-  width: min(420px, 100%);
+  width: clamp(180px, 28vw, 420px);
+  max-width: 100%;
   height: auto;
   display: block;
 }
@@ -205,7 +207,7 @@
 ========================= */
 @media (max-width: 900px) {
   .signup__card {
-    min-height: auto; /* ✅ allow natural height on small screens */
+    min-height: auto;
   }
 
   .signup__inner {
@@ -217,8 +219,9 @@
     order: -1; /* image on top */
   }
 
+  /* ✅ keep clamp but allow slightly bigger on tablet if you want */
   .signup__illustration img {
-    width: min(360px, 100%);
+    width: clamp(180px, 50vw, 360px);
   }
 }
 
