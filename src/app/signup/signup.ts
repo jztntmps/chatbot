@@ -20,16 +20,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 function strongPasswordValidator(control: AbstractControl): ValidationErrors | null {
   const value = String(control.value || '');
-
   const minLen = value.length >= 6;
   const hasUpper = /[A-Z]/.test(value);
   const hasLower = /[a-z]/.test(value);
   const hasNumber = /\d/.test(value);
   const hasSpecial = /[^A-Za-z0-9]/.test(value);
-
   const ok = minLen && hasUpper && hasLower && hasNumber && hasSpecial;
   if (ok) return null;
-
   return { strongPassword: { minLen, hasUpper, hasLower, hasNumber, hasSpecial } };
 }
 
@@ -38,6 +35,33 @@ function matchPasswords(group: AbstractControl): ValidationErrors | null {
   const confirm = group.get('confirmPassword')?.value;
   if (!pass || !confirm) return null;
   return pass === confirm ? null : { passwordMismatch: true };
+}
+
+function allowedEmailValidator(control: AbstractControl): ValidationErrors | null {
+  const raw = String(control.value ?? '').trim().toLowerCase();
+  if (!raw) return null;
+
+  const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(raw);
+  if (!basic) return { emailFormat: true };
+
+  const allowedEndings = new Set([
+    'com', 'net', 'org', 'edu', 'gov', 'io', 'co', 'ph',
+    'com.ph', 'net.ph', 'org.ph', 'edu.ph', 'gov.ph',
+  ]);
+
+  const domain = raw.split('@')[1] || '';
+  const parts = domain.split('.').filter(Boolean);
+
+  if (parts.length < 2) return { emailFormat: true };
+
+  const last1 = parts.slice(-1).join('.');
+  const last2 = parts.slice(-2).join('.');
+
+  if (!allowedEndings.has(last1) && !allowedEndings.has(last2)) {
+    return { emailDomainNotAllowed: true };
+  }
+
+  return null;
 }
 
 @Component({
@@ -52,11 +76,9 @@ export class Signup {
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
-
   private readonly baseUrl = 'http://localhost:8080/api/auth';
 
   constructor(private router: Router) {
-    // ✅ auto-clear backend errors when user edits fields
     this.form
       .get('username')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
@@ -72,7 +94,6 @@ export class Signup {
   @ViewChild('usernameInput') usernameInput!: ElementRef<HTMLInputElement>;
 
   submitting = false;
-
   usernameError = '';
   emailError = '';
   generalError = '';
@@ -80,7 +101,7 @@ export class Signup {
   form = this.fb.group(
     {
       username: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, allowedEmailValidator]],
       password: ['', [Validators.required, strongPasswordValidator]],
       confirmPassword: ['', [Validators.required]],
     },
@@ -95,17 +116,12 @@ export class Signup {
     this.router.navigate(['/']);
   }
 
-  // ---------- UX helpers ----------
   private trimControl(name: 'email' | 'username') {
     const ctrl = this.form.get(name);
     if (!ctrl) return;
-
     const v = String(ctrl.value ?? '');
     const trimmed = v.trim();
-
-    if (v !== trimmed) {
-      ctrl.setValue(trimmed, { emitEvent: false }); // avoid loops
-    }
+    if (v !== trimmed) ctrl.setValue(trimmed, { emitEvent: false });
   }
 
   onUsernameInput() {
@@ -121,10 +137,8 @@ export class Signup {
   private clearUsernameBackendError() {
     this.usernameError = '';
     this.generalError = '';
-
     const ctrl = this.form.get('username');
     if (!ctrl) return;
-
     if (ctrl.errors?.['backendTaken']) {
       const { backendTaken, ...rest } = ctrl.errors;
       ctrl.setErrors(Object.keys(rest).length ? rest : null);
@@ -134,10 +148,8 @@ export class Signup {
   private clearEmailBackendError() {
     this.emailError = '';
     this.generalError = '';
-
     const ctrl = this.form.get('email');
     if (!ctrl) return;
-
     if (ctrl.errors?.['backendTaken']) {
       const { backendTaken, ...rest } = ctrl.errors;
       ctrl.setErrors(Object.keys(rest).length ? rest : null);
@@ -155,13 +167,11 @@ export class Signup {
     }
   }
 
-  // ---------- submit ----------
   onSubmit() {
     this.usernameError = '';
     this.emailError = '';
     this.generalError = '';
 
-    // trim before validation / submit
     this.trimControl('username');
     this.trimControl('email');
 
@@ -182,23 +192,18 @@ export class Signup {
     this.http.post<any>(`${this.baseUrl}/signup`, payload).subscribe({
       next: (res) => {
         const userId = res?.userId || res?.id || res?._id || '';
-
-        // ✅ IMPORTANT: use sessionStorage (same as login)
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userEmail', res?.email || payload.email);
         if (userId) sessionStorage.setItem('userId', userId);
-
         this.router.navigate(['/chatbox']);
       },
 
       error: (err) => {
         const backendErrors = err?.error;
 
-        // expect: { username: "...", email: "...", general: "..." }
         if (backendErrors && typeof backendErrors === 'object') {
           if (backendErrors.username) {
             this.usernameError = backendErrors.username;
-
             const cur = this.f.username.errors || {};
             this.f.username.setErrors({ ...cur, backendTaken: true });
             this.f.username.markAsTouched();
@@ -206,7 +211,6 @@ export class Signup {
 
           if (backendErrors.email) {
             this.emailError = backendErrors.email;
-
             const cur = this.f.email.errors || {};
             this.f.email.setErrors({ ...cur, backendTaken: true });
             this.f.email.markAsTouched();
@@ -216,7 +220,6 @@ export class Signup {
             this.generalError = backendErrors.general;
           }
 
-          // focus best field
           if (this.usernameError) this.usernameInput?.nativeElement?.focus();
           else if (this.emailError) this.emailInput?.nativeElement?.focus();
         } else {
