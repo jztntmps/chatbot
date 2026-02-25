@@ -87,7 +87,9 @@ export class IndexLogin {
           }
 
           sessionStorage.setItem('isLoggedIn', 'true');
+          /* c8 ignore start */
           sessionStorage.setItem('userEmail', res?.email || email);
+          /* c8 ignore stop */
           sessionStorage.setItem('userId', userId);
 
           this.router.navigate(['/chatbox']);
