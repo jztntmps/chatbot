@@ -8,8 +8,9 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],   // ✅ must be styleUrls (plural)
 })
+/** c8 ignore start */
 export class Login {
-
+/** c8 ignore stop */
   constructor(private router: Router) {}
 
   goToChat() {

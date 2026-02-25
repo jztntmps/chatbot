@@ -71,7 +71,19 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "runner": "vitest",
+            "coverage": true,
+            "coverageExclude": [
+              "/*.html",
+              "/*.scss"
+            ],
+            "coverageReporters": [
+              "text",
+              "html"
+            ]
+          }
         }
       }
     }
